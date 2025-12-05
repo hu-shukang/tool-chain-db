@@ -8,6 +8,12 @@ import type { GetLastTupleElement, TupleToResults } from '@tool-chain/core';
 export type { TupleToResults, GetLastTupleElement };
 
 /**
+ * 内部任务函数类型
+ * 接收数据库实例和之前的结果，返回当前步骤的结果
+ */
+export type Task<TDb, TResults extends any[]> = (db: TDb, results: TupleToResults<TResults>) => Promise<any>;
+
+/**
  * 数据库上下文
  * 存储数据库实例和适配器信息
  */

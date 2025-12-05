@@ -9,7 +9,7 @@ import {
   Chains as CoreChains,
 } from '@tool-chain/core';
 
-import type { DbAdapter, DbContext, GetLastTupleElement, TupleToResults } from './types';
+import type { DbAdapter, DbContext, GetLastTupleElement, Task, TupleToResults } from './types';
 
 /**
  * 数据库链式操作类
@@ -34,7 +34,7 @@ import type { DbAdapter, DbContext, GetLastTupleElement, TupleToResults } from '
  */
 export class Chains<TDb = unknown, TResults extends any[] = []> {
   private context: DbContext<any> | null = null;
-  private tasks: Array<(db: any, results: any) => Promise<any>> = [];
+  private tasks: Task<TDb, any[]>[] = [];
 
   constructor() {}
 
@@ -51,7 +51,7 @@ export class Chains<TDb = unknown, TResults extends any[] = []> {
       adapter,
       isTransaction: false,
     };
-    newChains.tasks = this.tasks;
+    newChains.tasks = this.tasks as unknown as Task<T, any[]>[];
     return newChains;
   }
 
@@ -68,7 +68,7 @@ export class Chains<TDb = unknown, TResults extends any[] = []> {
       adapter,
       isTransaction: true,
     };
-    newChains.tasks = this.tasks;
+    newChains.tasks = this.tasks as unknown as Task<T, any[]>[];
     return newChains;
   }
 
@@ -106,28 +106,21 @@ export class Chains<TDb = unknown, TResults extends any[] = []> {
    */
   chain<R>(fn: any, options?: ChainOptions): Chains<TDb, [...TResults, R]> {
     // 将函数包装成统一的任务格式: (db, results) => Promise<R>
-    const task = async (db: TDb, results: any): Promise<R> => {
+    const task: Task<TDb, TResults> = async (db, results) => {
       if (typeof fn === 'function') {
         // 检查 results 是否为空对象（第一次调用）
         const hasResults = results && Object.keys(results).length > 0;
 
         if (hasResults) {
           // 有结果，先尝试作为 Results 函数调用
-          try {
-            const maybeDbFn = (fn as any)(results);
-            // 如果返回的是函数，说明这是 Results 函数模式
-            if (typeof maybeDbFn === 'function') {
-              return await Promise.resolve(maybeDbFn(db));
-            }
-            // 如果返回的不是函数，说明这是 Service 函数被错误地用 results 调用了
-            // 应该fallback到用 db 调用
-          } catch {
-            // 如果调用失败，也继续尝试作为 Service 函数
+          const maybeDbFn = this.tryCallAsResultsFunction(fn, results);
+          if (maybeDbFn !== null) {
+            return await Promise.resolve(maybeDbFn(db));
           }
         }
 
         // 作为 Service 函数直接调用（第一次调用，或者上面的尝试失败）
-        return await Promise.resolve((fn as any)(db));
+        return await Promise.resolve(fn(db));
       }
 
       throw new Error('Invalid function type');
@@ -139,9 +132,32 @@ export class Chains<TDb = unknown, TResults extends any[] = []> {
     // 创建新的 Chains 实例（不可变模式）
     const newChains = new Chains<TDb, [...TResults, R]>();
     newChains.context = this.context;
-    newChains.tasks = [...this.tasks, wrappedTask];
+    newChains.tasks = [...this.tasks, wrappedTask as Task<TDb, any[]>];
 
     return newChains;
+  }
+
+  /**
+   * 尝试将函数作为 Results 函数调用
+   * @private
+   * @returns 如果成功返回 db 函数，否则返回 null
+   */
+  private tryCallAsResultsFunction(
+    fn: (...args: any[]) => any,
+    results: TupleToResults<TResults>,
+  ): ((db: TDb) => any) | null {
+    try {
+      const maybeDbFn = fn(results);
+      // 如果返回的是函数，说明这是 Results 函数模式
+      if (typeof maybeDbFn === 'function') {
+        return maybeDbFn;
+      }
+      // 如果返回的不是函数，说明这是 Service 函数被错误地用 results 调用了
+      return null;
+    } catch {
+      // 如果调用失败，返回 null 表示不是 Results 函数
+      return null;
+    }
   }
 
   /**
@@ -165,11 +181,11 @@ export class Chains<TDb = unknown, TResults extends any[] = []> {
    * @private
    */
   private async executeSequentially(): Promise<any> {
-    const results: any = {};
-    let lastResult: any;
+    const results: Record<string, unknown> = {};
+    let lastResult: unknown;
 
     for (let i = 0; i < this.tasks.length; i++) {
-      lastResult = await this.tasks[i](this.context!.db, results);
+      lastResult = await this.tasks[i](this.context!.db, results as TupleToResults<any[]>);
       results[`r${i + 1}`] = lastResult;
     }
 
@@ -188,12 +204,12 @@ export class Chains<TDb = unknown, TResults extends any[] = []> {
     }
 
     return await adapter.transaction(db, async (trx) => {
-      const results: any = {};
-      let lastResult: any;
+      const results: Record<string, unknown> = {};
+      let lastResult: unknown;
 
       for (let i = 0; i < this.tasks.length; i++) {
         // 在事务中，传递 trx 而不是 db
-        lastResult = await this.tasks[i](trx, results);
+        lastResult = await this.tasks[i](trx, results as TupleToResults<any[]>);
         results[`r${i + 1}`] = lastResult;
       }
 
@@ -205,15 +221,17 @@ export class Chains<TDb = unknown, TResults extends any[] = []> {
    * 使用 CoreChains 包装任务以支持 retry/timeout/withoutThrow
    * @private
    */
-  private wrapWithOptions(
-    task: (db: TDb, results: any) => Promise<any>,
+  private wrapWithOptions<TCurrentResults extends any[]>(
+    task: Task<TDb, TCurrentResults>,
     options?: ChainOptions,
-  ): (db: TDb, results: any) => Promise<any> {
+  ): Task<TDb, TCurrentResults> {
     if (!options) return task;
 
     // 使用 CoreChains 处理单个任务的执行策略
-    return async (db: TDb, results: any) => {
-      return await new CoreChains().chain(() => task(db, results), options as any).invoke();
+    return async (db, results) => {
+      // 使用类型断言来兼容 CoreChains 的 options 类型
+      type CoreChainOptions = Parameters<CoreChains['chain']>[1];
+      return await new CoreChains().chain(() => task(db, results), options as CoreChainOptions).invoke();
     };
   }
 }
