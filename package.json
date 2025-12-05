@@ -1,0 +1,77 @@
+{
+  "name": "@tool-chain/db",
+  "version": "1.0.0",
+  "description": "数据库链式操作库 - 基于 @tool-chain/core,支持 Kysely 和 TypeORM",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/types/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "npm run build:esm && npm run build:cjs && npm run build:types",
+    "build:esm": "tsc --module esnext --outDir dist/esm",
+    "build:cjs": "tsc --module commonjs --outDir dist/cjs",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist/types",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "format": "prettier . --write",
+    "lint": "eslint . --fix"
+  },
+  "keywords": [
+    "database",
+    "chain",
+    "kysely",
+    "typeorm",
+    "transaction",
+    "async",
+    "toolchain"
+  ],
+  "author": "HU SHUKANG",
+  "license": "MIT",
+  "dependencies": {
+    "@tool-chain/core": "^1.1.2"
+  },
+  "peerDependencies": {
+    "kysely": ">=0.27.0",
+    "typeorm": ">=0.3.0"
+  },
+  "peerDependenciesMeta": {
+    "kysely": {
+      "optional": true
+    },
+    "typeorm": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.28.0",
+    "@trivago/prettier-plugin-sort-imports": "^6.0.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.0.0",
+    "better-sqlite3": "^12.5.0",
+    "eslint": "^9.28.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-prettier": "^5.4.1",
+    "jest": "^30.2.0",
+    "kysely": "^0.27.0",
+    "prettier": "^3.0.0",
+    "ts-jest": "^29.4.6",
+    "typeorm": "^0.3.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.33.0"
+  }
+}
