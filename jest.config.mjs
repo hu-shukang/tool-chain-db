@@ -10,6 +10,8 @@ const config = {
       {
         tsconfig: {
           types: ['node', 'jest'],
+          experimentalDecorators: true,
+          emitDecoratorMetadata: true,
         },
       },
     ],
