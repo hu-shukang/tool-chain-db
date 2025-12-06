@@ -3,56 +3,56 @@
 [![npm version](https://img.shields.io/npm/v/@tool-chain/db.svg)](https://www.npmjs.com/package/@tool-chain/db)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Database chain operation library based on [@tool-chain/core](https://github.com/yourusername/tool-chain-core), designed specifically for building composable database operations with support for multiple ORMs.
+基于 [@tool-chain/core](https://github.com/yourusername/tool-chain-core) 的数据库链式操作库，专为构建可组合的数据库操作而设计，支持多种 ORM 框架。
 
-[中文文档](./README.zh-CN.md) | [日本語ドキュメント](./README.ja.md)
+[English](./README.md) | [日本語ドキュメント](./README.ja.md)
 
-## Features
+## 特性
 
-✨ **Multi-ORM Support** - Works with Kysely, TypeORM, Prisma, and Drizzle ORM
-🔗 **Chainable API** - Build complex database operations with a fluent interface
-🔄 **Transaction Management** - Built-in transaction support with automatic commit/rollback
-📦 **Result Passing** - Access previous operation results in subsequent steps
-🎯 **Type-Safe** - Full TypeScript support with excellent type inference
-🛡️ **Error Handling** - Integrated error handling with `withoutThrow` option
-⚡ **Advanced Features** - Retry, timeout, and other features from @tool-chain/core
-🎨 **Service Pattern** - Higher-order function pattern for clean service layer design
+✨ **多 ORM 支持** - 支持 Kysely、TypeORM、Prisma 和 Drizzle ORM
+🔗 **链式 API** - 使用流畅的接口构建复杂的数据库操作
+🔄 **事务管理** - 内置事务支持，自动提交/回滚
+📦 **结果传递** - 在后续步骤中访问前一步的操作结果
+🎯 **类型安全** - 完整的 TypeScript 支持，优秀的类型推断
+🛡️ **错误处理** - 集成错误处理，支持 `withoutThrow` 选项
+⚡ **高级特性** - 支持重试、超时等来自 @tool-chain/core 的功能
+🎨 **Service 模式** - 高阶函数模式，打造清晰的服务层设计
 
-## Installation
+## 安装
 
 ```bash
 npm install @tool-chain/db @tool-chain/core
 ```
 
-Then install your preferred ORM (one or more):
+然后安装你喜欢的 ORM（一个或多个）：
 
 ```bash
-# For Kysely
+# Kysely
 npm install kysely
 
-# For TypeORM
+# TypeORM
 npm install typeorm
 
-# For Prisma
+# Prisma
 npm install @prisma/client
 
-# For Drizzle ORM
+# Drizzle ORM
 npm install drizzle-orm
 ```
 
-## Quick Start
+## 快速开始
 
-### Basic Usage
+### 基础用法
 
-There are two ways to use this library:
+本库提供两种使用方式：
 
-**Option 1: Using Convenience Classes (Recommended)**
+**方式一：使用便利类（推荐）**
 
 ```typescript
 import { ChainsWithKysely } from '@tool-chain/db';
 import { Kysely } from 'kysely';
 
-// Define your service functions
+// 定义你的 service 函数
 function getUser(id: number) {
   return (db: Kysely<Database>) => {
     return db
@@ -63,20 +63,20 @@ function getUser(id: number) {
   };
 }
 
-// Execute the chain - no need to pass adapter manually
+// 执行链式操作 - 无需手动传递 adapter
 const user = await new ChainsWithKysely<Database>()
   .use(db)
   .chain(getUser(123))
   .invoke();
 ```
 
-**Option 2: Using Generic Chains Class**
+**方式二：使用通用 Chains 类**
 
 ```typescript
 import { Chains, KyselyAdapter } from '@tool-chain/db';
 import { Kysely } from 'kysely';
 
-// Define your service functions
+// 定义你的 service 函数
 function getUser(id: number) {
   return (db: Kysely<Database>) => {
     return db
@@ -87,16 +87,16 @@ function getUser(id: number) {
   };
 }
 
-// Execute the chain - need to pass adapter explicitly
+// 执行链式操作 - 需要显式传递 adapter
 const user = await new Chains()
   .use(db, new KyselyAdapter())
   .chain(getUser(123))
   .invoke();
 ```
 
-### With Transactions
+### 使用事务
 
-**Using Convenience Class:**
+**使用便利类：**
 
 ```typescript
 import { ChainsWithKysely } from '@tool-chain/db';
@@ -128,7 +128,7 @@ const result = await new ChainsWithKysely<Database>()
   .invoke();
 ```
 
-**Using Generic Chains Class:**
+**使用通用 Chains 类：**
 
 ```typescript
 import { Chains, KyselyAdapter } from '@tool-chain/db';
@@ -140,7 +140,7 @@ const result = await new Chains()
   .invoke();
 ```
 
-## Usage Examples by ORM
+## 各 ORM 的使用示例
 
 ### Kysely
 
@@ -163,7 +163,7 @@ interface Database {
   };
 }
 
-// Initialize Kysely
+// 初始化 Kysely
 const db = new Kysely<Database>({
   dialect: new PostgresDialect({
     pool: new Pool({
@@ -175,7 +175,7 @@ const db = new Kysely<Database>({
 
 const adapter = new KyselyAdapter<Database>();
 
-// Define service functions
+// 定义 service 函数
 function getUser(id: number) {
   return (db: Kysely<Database>) => {
     return db.selectFrom('user').where('id', '=', id).selectAll().executeTakeFirstOrThrow();
@@ -194,14 +194,14 @@ function createPost(data: { userId: number; title: string; content: string }) {
   };
 }
 
-// Non-transaction mode
+// 非事务模式
 const posts = await new Chains()
   .use(db, adapter)
   .chain(getUser(1))
   .chain((results) => getUserPosts(results.r1.id))
   .invoke();
 
-// Transaction mode
+// 事务模式
 const newPost = await new Chains()
   .transaction(db, adapter)
   .chain(getUser(1))
@@ -223,7 +223,7 @@ import { Chains, TypeORMAdapter } from '@tool-chain/db';
 import { User } from './entities/User';
 import { Post } from './entities/Post';
 
-// Initialize TypeORM
+// 初始化 TypeORM
 const dataSource = new DataSource({
   type: 'postgres',
   host: 'localhost',
@@ -239,7 +239,7 @@ await dataSource.initialize();
 
 const adapter = new TypeORMAdapter();
 
-// Define service functions
+// 定义 service 函数
 function getUser(id: number) {
   return (manager: typeof dataSource.manager) => {
     return manager.findOneOrFail(User, { where: { id } });
@@ -259,14 +259,14 @@ function createPost(data: { userId: number; title: string; content: string }) {
   };
 }
 
-// Non-transaction mode
+// 非事务模式
 const posts = await new Chains()
   .use(dataSource, adapter)
   .chain(getUser(1))
   .chain((results) => getUserPosts(results.r1.id))
   .invoke();
 
-// Transaction mode
+// 事务模式
 const newPost = await new Chains()
   .transaction(dataSource, adapter)
   .chain(getUser(1))
@@ -286,12 +286,12 @@ const newPost = await new Chains()
 import { PrismaClient } from '@prisma/client';
 import { Chains, PrismaAdapter } from '@tool-chain/db';
 
-// Initialize Prisma
+// 初始化 Prisma
 const prisma = new PrismaClient();
 
 const adapter = new PrismaAdapter();
 
-// Define service functions
+// 定义 service 函数
 function getUser(id: number) {
   return (prisma: PrismaClient) => {
     return prisma.user.findUniqueOrThrow({ where: { id } });
@@ -310,14 +310,14 @@ function createPost(data: { userId: number; title: string; content: string }) {
   };
 }
 
-// Non-transaction mode
+// 非事务模式
 const posts = await new Chains()
   .use(prisma, adapter)
   .chain(getUser(1))
   .chain((results) => getUserPosts(results.r1.id))
   .invoke();
 
-// Transaction mode
+// 事务模式
 const newPost = await new Chains()
   .transaction(prisma, adapter)
   .chain(getUser(1))
@@ -340,13 +340,13 @@ import { Chains, DrizzleAdapter } from '@tool-chain/db';
 import { users, posts } from './schema';
 import { eq } from 'drizzle-orm';
 
-// Initialize Drizzle
+// 初始化 Drizzle
 const sqlite = new Database('mydb.db');
 const db = drizzle(sqlite);
 
 const adapter = new DrizzleAdapter();
 
-// Define service functions
+// 定义 service 函数
 function getUser(id: number) {
   return (db: typeof db) => {
     return db.select().from(users).where(eq(users.id, id)).get();
@@ -365,14 +365,14 @@ function createPost(data: { userId: number; title: string; content: string }) {
   };
 }
 
-// Non-transaction mode
+// 非事务模式
 const postList = await new Chains()
   .use(db, adapter)
   .chain(getUser(1))
   .chain((results) => getUserPosts(results.r1!.id))
   .invoke();
 
-// Transaction mode
+// 事务模式
 const newPost = await new Chains()
   .transaction(db, adapter)
   .chain(getUser(1))
@@ -386,73 +386,73 @@ const newPost = await new Chains()
   .invoke();
 ```
 
-## API Reference
+## API 参考
 
-### Chains Class
+### Chains 类
 
 #### `use(db, adapter?)`
 
-Inject a database instance in non-transaction mode.
+注入数据库实例（非事务模式）。
 
-- **Parameters:**
-  - `db`: Database instance
-  - `adapter`: Database adapter (optional)
-- **Returns:** New Chains instance with the database type
+- **参数：**
+  - `db`: 数据库实例
+  - `adapter`: 数据库适配器（可选）
+- **返回：** 带有数据库类型的新 Chains 实例
 
 #### `transaction(db, adapter)`
 
-Enable transaction mode.
+启用事务模式。
 
-- **Parameters:**
-  - `db`: Database instance
-  - `adapter`: Database adapter (required)
-- **Returns:** New Chains instance with the database type
+- **参数：**
+  - `db`: 数据库实例
+  - `adapter`: 数据库适配器（必需）
+- **返回：** 带有数据库类型的新 Chains 实例
 
 #### `chain(fn, options?)`
 
-Add a database operation to the chain.
+向链中添加数据库操作。
 
-**Function Patterns:**
+**函数模式：**
 
-1. **Service Function Pattern (Recommended)**
+1. **Service 函数模式（推荐）**
    ```typescript
    function getUser(id: number) {
      return (db: Database) => {
-       // Your database operation
+       // 你的数据库操作
      };
    }
    chains.chain(getUser(123));
    ```
 
-2. **Results Accessor Pattern**
+2. **结果访问器模式**
    ```typescript
    chains.chain((results) => getUser(results.r1.id));
    ```
 
-- **Parameters:**
-  - `fn`: Database operation function
-  - `options`: Chain options (retry, timeout, withoutThrow, etc.)
-- **Returns:** New Chains instance with the operation added
+- **参数：**
+  - `fn`: 数据库操作函数
+  - `options`: 链选项（retry、timeout、withoutThrow 等）
+- **返回：** 添加了操作的新 Chains 实例
 
-**Options:**
+**选项：**
 
-- `retry?: number` - Number of retry attempts
-- `timeout?: number` - Timeout in milliseconds
-- `withoutThrow?: boolean` - Return `{ data?, error? }` instead of throwing
+- `retry?: number` - 重试次数
+- `timeout?: number` - 超时时间（毫秒）
+- `withoutThrow?: boolean` - 返回 `{ data?, error? }` 而不是抛出异常
 
 #### `invoke()`
 
-Execute the entire chain.
+执行整个链。
 
-- **Returns:** Promise resolving to the last operation's result
+- **返回：** Promise，解析为最后一个操作的结果
 
-### Convenience Classes
+### 便利类
 
-These classes provide a simpler API by pre-configuring the appropriate adapter for each ORM.
+这些类通过预配置适当的适配器为各个 ORM 提供了更简单的 API。
 
 #### `ChainsWithKysely<DB>`
 
-Convenience class for Kysely with pre-configured adapter.
+Kysely 的便利类，已预配置适配器。
 
 ```typescript
 import { ChainsWithKysely } from '@tool-chain/db';
@@ -465,7 +465,7 @@ const result = await new ChainsWithKysely<Database>()
 
 #### `ChainsWithTypeORM`
 
-Convenience class for TypeORM with pre-configured adapter.
+TypeORM 的便利类，已预配置适配器。
 
 ```typescript
 import { ChainsWithTypeORM } from '@tool-chain/db';
@@ -478,7 +478,7 @@ const result = await new ChainsWithTypeORM()
 
 #### `ChainsWithPrisma`
 
-Convenience class for Prisma with pre-configured adapter.
+Prisma 的便利类，已预配置适配器。
 
 ```typescript
 import { ChainsWithPrisma } from '@tool-chain/db';
@@ -491,7 +491,7 @@ const result = await new ChainsWithPrisma()
 
 #### `ChainsWithDrizzle<TDb>`
 
-Convenience class for Drizzle ORM with pre-configured adapter.
+Drizzle ORM 的便利类，已预配置适配器。
 
 ```typescript
 import { ChainsWithDrizzle } from '@tool-chain/db';
@@ -502,13 +502,13 @@ const result = await new ChainsWithDrizzle()
   .invoke();
 ```
 
-### Adapters
+### 适配器
 
-These adapters can be used with the generic `Chains` class if you prefer explicit adapter management.
+如果你更喜欢显式管理适配器，这些适配器可以与通用 `Chains` 类一起使用。
 
 #### `KyselyAdapter<DB>`
 
-Adapter for Kysely ORM.
+Kysely ORM 的适配器。
 
 ```typescript
 import { KyselyAdapter } from '@tool-chain/db';
@@ -517,7 +517,7 @@ const adapter = new KyselyAdapter<Database>();
 
 #### `TypeORMAdapter`
 
-Adapter for TypeORM.
+TypeORM 的适配器。
 
 ```typescript
 import { TypeORMAdapter } from '@tool-chain/db';
@@ -526,7 +526,7 @@ const adapter = new TypeORMAdapter();
 
 #### `PrismaAdapter`
 
-Adapter for Prisma ORM.
+Prisma ORM 的适配器。
 
 ```typescript
 import { PrismaAdapter } from '@tool-chain/db';
@@ -535,16 +535,16 @@ const adapter = new PrismaAdapter();
 
 #### `DrizzleAdapter`
 
-Adapter for Drizzle ORM.
+Drizzle ORM 的适配器。
 
 ```typescript
 import { DrizzleAdapter } from '@tool-chain/db';
 const adapter = new DrizzleAdapter();
 ```
 
-## Error Handling
+## 错误处理
 
-Use the `withoutThrow` option to handle errors gracefully:
+使用 `withoutThrow` 选项优雅地处理错误：
 
 ```typescript
 const result = await new Chains()
@@ -553,15 +553,15 @@ const result = await new Chains()
   .invoke();
 
 if (result.error) {
-  console.error('User not found:', result.error);
+  console.error('用户未找到：', result.error);
 } else {
-  console.log('User:', result.data);
+  console.log('用户：', result.data);
 }
 ```
 
-## Advanced Features
+## 高级特性
 
-### Retry on Failure
+### 失败重试
 
 ```typescript
 const user = await new Chains()
@@ -570,7 +570,7 @@ const user = await new Chains()
   .invoke();
 ```
 
-### Timeout
+### 超时控制
 
 ```typescript
 const user = await new Chains()
@@ -579,7 +579,7 @@ const user = await new Chains()
   .invoke();
 ```
 
-### Accessing Previous Results
+### 访问前一步的结果
 
 ```typescript
 const result = await new Chains()
@@ -587,36 +587,36 @@ const result = await new Chains()
   .chain(getUser(1))
   .chain(getUserPosts(2))
   .chain((results) => {
-    // results.r1 - first operation result (user)
-    // results.r2 - second operation result (posts)
+    // results.r1 - 第一个操作的结果（user）
+    // results.r2 - 第二个操作的结果（posts）
     return someOperation(results.r1, results.r2);
   })
   .invoke();
 ```
 
-## TypeScript Support
+## TypeScript 支持
 
-This library is written in TypeScript and provides excellent type inference:
+本库使用 TypeScript 编写，提供优秀的类型推断：
 
 ```typescript
 const result = await new Chains()
   .use(db, adapter)
-  .chain(getUser(1)) // Returns User
+  .chain(getUser(1)) // 返回 User
   .chain((results) => {
-    // results.r1 is inferred as User
+    // results.r1 被推断为 User
     return getUserPosts(results.r1.id);
   })
-  .invoke(); // Inferred as Post[]
+  .invoke(); // 推断为 Post[]
 ```
 
-## License
+## 许可证
 
 MIT © HU SHUKANG
 
-## Contributing
+## 贡献
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+欢迎贡献！请随时提交 Pull Request。
 
-## Support
+## 支持
 
-If you have any questions or issues, please open an issue on [GitHub](https://github.com/yourusername/tool-chain-db).
+如果你有任何问题或遇到问题，请在 [GitHub](https://github.com/yourusername/tool-chain-db) 上开启 issue。

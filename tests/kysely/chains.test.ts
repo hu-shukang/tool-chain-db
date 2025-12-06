@@ -333,4 +333,223 @@ describe('chains', () => {
       expect(updatedUser.role).toBe('admin');
     });
   });
+
+  describe('ChainOptions 测试', () => {
+    describe('retry 选项', () => {
+      test('应该在失败时重试指定次数', async () => {
+        let attemptCount = 0;
+
+        function failTwiceThenSucceed() {
+          return async (_db: Kysely<TestDatabase>) => {
+            attemptCount++;
+            if (attemptCount < 3) {
+              throw new Error(`Attempt ${attemptCount} failed`);
+            }
+            return { success: true, attempts: attemptCount };
+          };
+        }
+
+        const result = await new Chains()
+          .use(db, adapter)
+          .chain(failTwiceThenSucceed(), { retry: 3 })
+          .invoke();
+
+        expect(result).toEqual({ success: true, attempts: 3 });
+        expect(attemptCount).toBe(3);
+      });
+
+      test('应该在重试次数用尽后抛出错误', async () => {
+        let attemptCount = 0;
+
+        function alwaysFail() {
+          return async (_db: Kysely<TestDatabase>) => {
+            attemptCount++;
+            throw new Error(`Attempt ${attemptCount} failed`);
+          };
+        }
+
+        await expect(
+          new Chains()
+            .use(db, adapter)
+            .chain(alwaysFail(), { retry: 2 })
+            .invoke(),
+        ).rejects.toThrow('Attempt');
+
+        // retry: 2 表示总共执行 3 次（1次初始 + 2次重试）
+        expect(attemptCount).toBe(3);
+      });
+
+      test('retry 应该与 withoutThrow 一起使用', async () => {
+        let attemptCount = 0;
+
+        function alwaysFail() {
+          return async (_db: Kysely<TestDatabase>) => {
+            attemptCount++;
+            throw new Error(`Attempt ${attemptCount} failed`);
+          };
+        }
+
+        const result = await new Chains()
+          .use(db, adapter)
+          .chain(alwaysFail(), { retry: 2, withoutThrow: true })
+          .invoke();
+
+        expect(result).toHaveProperty('error');
+        expect(result.error).toBeInstanceOf(Error);
+        expect(attemptCount).toBe(3); // 1次初始 + 2次重试
+      });
+    });
+
+    describe('timeout 选项', () => {
+      test('应该在超时后中断操作', async () => {
+        function slowOperation() {
+          return async (_db: Kysely<TestDatabase>) => {
+            // 等待 200ms
+            await new Promise((resolve) => setTimeout(resolve, 200));
+            return { success: true };
+          };
+        }
+
+        await expect(
+          new Chains()
+            .use(db, adapter)
+            .chain(slowOperation(), { timeout: 100 })
+            .invoke(),
+        ).rejects.toThrow();
+      });
+
+      test('应该在时限内完成操作', async () => {
+        function fastOperation() {
+          return async (_db: Kysely<TestDatabase>) => {
+            // 等待 50ms
+            await new Promise((resolve) => setTimeout(resolve, 50));
+            return { success: true };
+          };
+        }
+
+        const result = await new Chains()
+          .use(db, adapter)
+          .chain(fastOperation(), { timeout: 200 })
+          .invoke();
+
+        expect(result).toEqual({ success: true });
+      });
+
+      test('timeout 应该与 withoutThrow 一起使用', async () => {
+        function slowOperation() {
+          return async (_db: Kysely<TestDatabase>) => {
+            await new Promise((resolve) => setTimeout(resolve, 200));
+            return { success: true };
+          };
+        }
+
+        const result = await new Chains()
+          .use(db, adapter)
+          .chain(slowOperation(), { timeout: 100, withoutThrow: true })
+          .invoke();
+
+        expect(result).toHaveProperty('error');
+        expect(result.error).toBeInstanceOf(Error);
+      });
+    });
+
+    describe('组合使用多个选项', () => {
+      test('应该同时应用 retry 和 timeout', async () => {
+        let attemptCount = 0;
+
+        function slowOperationThatFailsOnce() {
+          return async (_db: Kysely<TestDatabase>) => {
+            attemptCount++;
+            await new Promise((resolve) => setTimeout(resolve, 50));
+            if (attemptCount < 2) {
+              throw new Error('First attempt failed');
+            }
+            return { success: true, attempts: attemptCount };
+          };
+        }
+
+        const result = await new Chains()
+          .use(db, adapter)
+          .chain(slowOperationThatFailsOnce(), { retry: 2, timeout: 100 })
+          .invoke();
+
+        expect(result).toEqual({ success: true, attempts: 2 });
+      });
+
+      test('应该同时应用 retry、timeout 和 withoutThrow', async () => {
+        let attemptCount = 0;
+
+        function alwaysSlow() {
+          return async (_db: Kysely<TestDatabase>) => {
+            attemptCount++;
+            await new Promise((resolve) => setTimeout(resolve, 150));
+            return { success: true };
+          };
+        }
+
+        const result = await new Chains()
+          .use(db, adapter)
+          .chain(alwaysSlow(), { retry: 1, timeout: 100, withoutThrow: true })
+          .invoke();
+
+        expect(result).toHaveProperty('error');
+        expect(result.error).toBeInstanceOf(Error);
+        // retry: 1 表示总共执行 2 次（1次初始 + 1次重试）
+        expect(attemptCount).toBe(2);
+      });
+    });
+
+    describe('在事务中使用 ChainOptions', () => {
+      test('retry 应该在事务中工作', async () => {
+        let attemptCount = 0;
+
+        function createUserWithRetry(data: { name: string; email: string }) {
+          return async (db: Kysely<TestDatabase>) => {
+            attemptCount++;
+            if (attemptCount < 2) {
+              throw new Error('Temporary failure');
+            }
+            const result = await db
+              .insertInto('user')
+              .values({ ...data, role: 'user', created_at: new Date().toISOString() } as any)
+              .returningAll()
+              .executeTakeFirstOrThrow();
+            return result;
+          };
+        }
+
+        const user = await new Chains()
+          .transaction(db, adapter)
+          .chain(createUserWithRetry({ name: 'Frank', email: 'frank@example.com' }), { retry: 2 })
+          .invoke();
+
+        expect(user.name).toBe('Frank');
+        expect(attemptCount).toBe(2);
+
+        // 验证用户已创建
+        const users = await db.selectFrom('user').selectAll().execute();
+        expect(users).toHaveLength(4); // 3 个种子数据 + 1 个新用户
+      });
+
+      test('timeout 应该在事务中工作', async () => {
+        function slowCreate() {
+          return async (_db: Kysely<TestDatabase>) => {
+            await new Promise((resolve) => setTimeout(resolve, 200));
+            return { success: true };
+          };
+        }
+
+        await expect(
+          new Chains()
+            .transaction(db, adapter)
+            .chain(slowCreate(), { timeout: 100 })
+            .invoke(),
+        ).rejects.toThrow();
+
+        // 验证事务已回滚，没有新数据
+        const users = await db.selectFrom('user').selectAll().execute();
+        expect(users).toHaveLength(3); // 只有种子数据
+      });
+    });
+  });
 });

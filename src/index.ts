@@ -1,23 +1,23 @@
 /**
  * @tool-chain/db
- * 数据库链式操作库
+ * Database chain operation library
  *
- * 基于 @tool-chain/core，专门为数据库操作设计，支持：
- * - Kysely 和 TypeORM
- * - 事务管理
- * - 高阶函数模式的 service 层
- * - 结果传递和访问
- * - retry/timeout/withoutThrow 等高级功能
+ * Based on @tool-chain/core, designed specifically for database operations, supports:
+ * - Kysely, TypeORM, Prisma, and Drizzle ORM
+ * - Transaction management
+ * - Higher-order function pattern for service layer
+ * - Result passing and access
+ * - Advanced features like retry/timeout/withoutThrow
  */
 
-// 导出核心类和工厂函数
+// Export core classes and factory functions
 export * from './chains';
 
-// 导出适配器
+// Export adapters
 export * from './adapters/kysely';
 export * from './adapters/typeorm';
 export * from './adapters/prisma';
 export * from './adapters/drizzle';
 
-// 导出类型
+// Export types
 export * from './types';

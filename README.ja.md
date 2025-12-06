@@ -3,56 +3,56 @@
 [![npm version](https://img.shields.io/npm/v/@tool-chain/db.svg)](https://www.npmjs.com/package/@tool-chain/db)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Database chain operation library based on [@tool-chain/core](https://github.com/yourusername/tool-chain-core), designed specifically for building composable database operations with support for multiple ORMs.
+[@tool-chain/core](https://github.com/yourusername/tool-chain-core) をベースにしたデータベースチェーン操作ライブラリ。複数のORMフレームワークに対応し、組み合わせ可能なデータベース操作の構築を目的として設計されています。
 
-[中文文档](./README.zh-CN.md) | [日本語ドキュメント](./README.ja.md)
+[English](./README.md) | [中文文档](./README.zh-CN.md)
 
-## Features
+## 特徴
 
-✨ **Multi-ORM Support** - Works with Kysely, TypeORM, Prisma, and Drizzle ORM
-🔗 **Chainable API** - Build complex database operations with a fluent interface
-🔄 **Transaction Management** - Built-in transaction support with automatic commit/rollback
-📦 **Result Passing** - Access previous operation results in subsequent steps
-🎯 **Type-Safe** - Full TypeScript support with excellent type inference
-🛡️ **Error Handling** - Integrated error handling with `withoutThrow` option
-⚡ **Advanced Features** - Retry, timeout, and other features from @tool-chain/core
-🎨 **Service Pattern** - Higher-order function pattern for clean service layer design
+✨ **マルチORM対応** - Kysely、TypeORM、Prisma、Drizzle ORMに対応
+🔗 **チェーン可能なAPI** - 流暢なインターフェースで複雑なデータベース操作を構築
+🔄 **トランザクション管理** - 自動コミット/ロールバック機能を備えた組み込みトランザクションサポート
+📦 **結果の受け渡し** - 後続のステップで前の操作結果にアクセス可能
+🎯 **型安全** - 完全なTypeScriptサポートと優れた型推論
+🛡️ **エラーハンドリング** - `withoutThrow`オプションによる統合エラーハンドリング
+⚡ **高度な機能** - @tool-chain/coreからのリトライ、タイムアウトなどの機能
+🎨 **Serviceパターン** - 高階関数パターンによるクリーンなサービスレイヤー設計
 
-## Installation
+## インストール
 
 ```bash
 npm install @tool-chain/db @tool-chain/core
 ```
 
-Then install your preferred ORM (one or more):
+次に、お好みのORMをインストールします（1つ以上）：
 
 ```bash
-# For Kysely
+# Kysely
 npm install kysely
 
-# For TypeORM
+# TypeORM
 npm install typeorm
 
-# For Prisma
+# Prisma
 npm install @prisma/client
 
-# For Drizzle ORM
+# Drizzle ORM
 npm install drizzle-orm
 ```
 
-## Quick Start
+## クイックスタート
 
-### Basic Usage
+### 基本的な使用方法
 
-There are two ways to use this library:
+このライブラリには2つの使用方法があります：
 
-**Option 1: Using Convenience Classes (Recommended)**
+**方法1：便利クラスを使用（推奨）**
 
 ```typescript
 import { ChainsWithKysely } from '@tool-chain/db';
 import { Kysely } from 'kysely';
 
-// Define your service functions
+// サービス関数を定義
 function getUser(id: number) {
   return (db: Kysely<Database>) => {
     return db
@@ -63,20 +63,20 @@ function getUser(id: number) {
   };
 }
 
-// Execute the chain - no need to pass adapter manually
+// チェーンを実行 - adapterを手動で渡す必要なし
 const user = await new ChainsWithKysely<Database>()
   .use(db)
   .chain(getUser(123))
   .invoke();
 ```
 
-**Option 2: Using Generic Chains Class**
+**方法2：汎用Chainsクラスを使用**
 
 ```typescript
 import { Chains, KyselyAdapter } from '@tool-chain/db';
 import { Kysely } from 'kysely';
 
-// Define your service functions
+// サービス関数を定義
 function getUser(id: number) {
   return (db: Kysely<Database>) => {
     return db
@@ -87,16 +87,16 @@ function getUser(id: number) {
   };
 }
 
-// Execute the chain - need to pass adapter explicitly
+// チェーンを実行 - adapterを明示的に渡す必要あり
 const user = await new Chains()
   .use(db, new KyselyAdapter())
   .chain(getUser(123))
   .invoke();
 ```
 
-### With Transactions
+### トランザクションを使用
 
-**Using Convenience Class:**
+**便利クラスを使用：**
 
 ```typescript
 import { ChainsWithKysely } from '@tool-chain/db';
@@ -128,7 +128,7 @@ const result = await new ChainsWithKysely<Database>()
   .invoke();
 ```
 
-**Using Generic Chains Class:**
+**汎用Chainsクラスを使用：**
 
 ```typescript
 import { Chains, KyselyAdapter } from '@tool-chain/db';
@@ -140,7 +140,7 @@ const result = await new Chains()
   .invoke();
 ```
 
-## Usage Examples by ORM
+## ORMごとの使用例
 
 ### Kysely
 
@@ -163,7 +163,7 @@ interface Database {
   };
 }
 
-// Initialize Kysely
+// Kyselyを初期化
 const db = new Kysely<Database>({
   dialect: new PostgresDialect({
     pool: new Pool({
@@ -175,7 +175,7 @@ const db = new Kysely<Database>({
 
 const adapter = new KyselyAdapter<Database>();
 
-// Define service functions
+// サービス関数を定義
 function getUser(id: number) {
   return (db: Kysely<Database>) => {
     return db.selectFrom('user').where('id', '=', id).selectAll().executeTakeFirstOrThrow();
@@ -194,14 +194,14 @@ function createPost(data: { userId: number; title: string; content: string }) {
   };
 }
 
-// Non-transaction mode
+// 非トランザクションモード
 const posts = await new Chains()
   .use(db, adapter)
   .chain(getUser(1))
   .chain((results) => getUserPosts(results.r1.id))
   .invoke();
 
-// Transaction mode
+// トランザクションモード
 const newPost = await new Chains()
   .transaction(db, adapter)
   .chain(getUser(1))
@@ -223,7 +223,7 @@ import { Chains, TypeORMAdapter } from '@tool-chain/db';
 import { User } from './entities/User';
 import { Post } from './entities/Post';
 
-// Initialize TypeORM
+// TypeORMを初期化
 const dataSource = new DataSource({
   type: 'postgres',
   host: 'localhost',
@@ -239,7 +239,7 @@ await dataSource.initialize();
 
 const adapter = new TypeORMAdapter();
 
-// Define service functions
+// サービス関数を定義
 function getUser(id: number) {
   return (manager: typeof dataSource.manager) => {
     return manager.findOneOrFail(User, { where: { id } });
@@ -259,14 +259,14 @@ function createPost(data: { userId: number; title: string; content: string }) {
   };
 }
 
-// Non-transaction mode
+// 非トランザクションモード
 const posts = await new Chains()
   .use(dataSource, adapter)
   .chain(getUser(1))
   .chain((results) => getUserPosts(results.r1.id))
   .invoke();
 
-// Transaction mode
+// トランザクションモード
 const newPost = await new Chains()
   .transaction(dataSource, adapter)
   .chain(getUser(1))
@@ -286,12 +286,12 @@ const newPost = await new Chains()
 import { PrismaClient } from '@prisma/client';
 import { Chains, PrismaAdapter } from '@tool-chain/db';
 
-// Initialize Prisma
+// Prismaを初期化
 const prisma = new PrismaClient();
 
 const adapter = new PrismaAdapter();
 
-// Define service functions
+// サービス関数を定義
 function getUser(id: number) {
   return (prisma: PrismaClient) => {
     return prisma.user.findUniqueOrThrow({ where: { id } });
@@ -310,14 +310,14 @@ function createPost(data: { userId: number; title: string; content: string }) {
   };
 }
 
-// Non-transaction mode
+// 非トランザクションモード
 const posts = await new Chains()
   .use(prisma, adapter)
   .chain(getUser(1))
   .chain((results) => getUserPosts(results.r1.id))
   .invoke();
 
-// Transaction mode
+// トランザクションモード
 const newPost = await new Chains()
   .transaction(prisma, adapter)
   .chain(getUser(1))
@@ -340,13 +340,13 @@ import { Chains, DrizzleAdapter } from '@tool-chain/db';
 import { users, posts } from './schema';
 import { eq } from 'drizzle-orm';
 
-// Initialize Drizzle
+// Drizzleを初期化
 const sqlite = new Database('mydb.db');
 const db = drizzle(sqlite);
 
 const adapter = new DrizzleAdapter();
 
-// Define service functions
+// サービス関数を定義
 function getUser(id: number) {
   return (db: typeof db) => {
     return db.select().from(users).where(eq(users.id, id)).get();
@@ -365,14 +365,14 @@ function createPost(data: { userId: number; title: string; content: string }) {
   };
 }
 
-// Non-transaction mode
+// 非トランザクションモード
 const postList = await new Chains()
   .use(db, adapter)
   .chain(getUser(1))
   .chain((results) => getUserPosts(results.r1!.id))
   .invoke();
 
-// Transaction mode
+// トランザクションモード
 const newPost = await new Chains()
   .transaction(db, adapter)
   .chain(getUser(1))
@@ -386,73 +386,73 @@ const newPost = await new Chains()
   .invoke();
 ```
 
-## API Reference
+## APIリファレンス
 
-### Chains Class
+### Chainsクラス
 
 #### `use(db, adapter?)`
 
-Inject a database instance in non-transaction mode.
+非トランザクションモードでデータベースインスタンスを注入します。
 
-- **Parameters:**
-  - `db`: Database instance
-  - `adapter`: Database adapter (optional)
-- **Returns:** New Chains instance with the database type
+- **パラメータ：**
+  - `db`: データベースインスタンス
+  - `adapter`: データベースアダプター（オプション）
+- **戻り値：** データベース型を持つ新しいChainsインスタンス
 
 #### `transaction(db, adapter)`
 
-Enable transaction mode.
+トランザクションモードを有効にします。
 
-- **Parameters:**
-  - `db`: Database instance
-  - `adapter`: Database adapter (required)
-- **Returns:** New Chains instance with the database type
+- **パラメータ：**
+  - `db`: データベースインスタンス
+  - `adapter`: データベースアダプター（必須）
+- **戻り値：** データベース型を持つ新しいChainsインスタンス
 
 #### `chain(fn, options?)`
 
-Add a database operation to the chain.
+チェーンにデータベース操作を追加します。
 
-**Function Patterns:**
+**関数パターン：**
 
-1. **Service Function Pattern (Recommended)**
+1. **サービス関数パターン（推奨）**
    ```typescript
    function getUser(id: number) {
      return (db: Database) => {
-       // Your database operation
+       // データベース操作
      };
    }
    chains.chain(getUser(123));
    ```
 
-2. **Results Accessor Pattern**
+2. **結果アクセサーパターン**
    ```typescript
    chains.chain((results) => getUser(results.r1.id));
    ```
 
-- **Parameters:**
-  - `fn`: Database operation function
-  - `options`: Chain options (retry, timeout, withoutThrow, etc.)
-- **Returns:** New Chains instance with the operation added
+- **パラメータ：**
+  - `fn`: データベース操作関数
+  - `options`: チェーンオプション（retry、timeout、withoutThrowなど）
+- **戻り値：** 操作が追加された新しいChainsインスタンス
 
-**Options:**
+**オプション：**
 
-- `retry?: number` - Number of retry attempts
-- `timeout?: number` - Timeout in milliseconds
-- `withoutThrow?: boolean` - Return `{ data?, error? }` instead of throwing
+- `retry?: number` - リトライ回数
+- `timeout?: number` - タイムアウト（ミリ秒）
+- `withoutThrow?: boolean` - 例外をスローする代わりに`{ data?, error? }`を返す
 
 #### `invoke()`
 
-Execute the entire chain.
+チェーン全体を実行します。
 
-- **Returns:** Promise resolving to the last operation's result
+- **戻り値：** 最後の操作の結果に解決されるPromise
 
-### Convenience Classes
+### 便利クラス
 
-These classes provide a simpler API by pre-configuring the appropriate adapter for each ORM.
+これらのクラスは、各ORMに適切なアダプターを事前設定することで、よりシンプルなAPIを提供します。
 
 #### `ChainsWithKysely<DB>`
 
-Convenience class for Kysely with pre-configured adapter.
+Kysely用の便利クラス、アダプターが事前設定済み。
 
 ```typescript
 import { ChainsWithKysely } from '@tool-chain/db';
@@ -465,7 +465,7 @@ const result = await new ChainsWithKysely<Database>()
 
 #### `ChainsWithTypeORM`
 
-Convenience class for TypeORM with pre-configured adapter.
+TypeORM用の便利クラス、アダプターが事前設定済み。
 
 ```typescript
 import { ChainsWithTypeORM } from '@tool-chain/db';
@@ -478,7 +478,7 @@ const result = await new ChainsWithTypeORM()
 
 #### `ChainsWithPrisma`
 
-Convenience class for Prisma with pre-configured adapter.
+Prisma用の便利クラス、アダプターが事前設定済み。
 
 ```typescript
 import { ChainsWithPrisma } from '@tool-chain/db';
@@ -491,7 +491,7 @@ const result = await new ChainsWithPrisma()
 
 #### `ChainsWithDrizzle<TDb>`
 
-Convenience class for Drizzle ORM with pre-configured adapter.
+Drizzle ORM用の便利クラス、アダプターが事前設定済み。
 
 ```typescript
 import { ChainsWithDrizzle } from '@tool-chain/db';
@@ -502,13 +502,13 @@ const result = await new ChainsWithDrizzle()
   .invoke();
 ```
 
-### Adapters
+### アダプター
 
-These adapters can be used with the generic `Chains` class if you prefer explicit adapter management.
+アダプターを明示的に管理したい場合は、これらのアダプターを汎用の`Chains`クラスと一緒に使用できます。
 
 #### `KyselyAdapter<DB>`
 
-Adapter for Kysely ORM.
+Kysely ORM用のアダプター。
 
 ```typescript
 import { KyselyAdapter } from '@tool-chain/db';
@@ -517,7 +517,7 @@ const adapter = new KyselyAdapter<Database>();
 
 #### `TypeORMAdapter`
 
-Adapter for TypeORM.
+TypeORM用のアダプター。
 
 ```typescript
 import { TypeORMAdapter } from '@tool-chain/db';
@@ -526,7 +526,7 @@ const adapter = new TypeORMAdapter();
 
 #### `PrismaAdapter`
 
-Adapter for Prisma ORM.
+Prisma ORM用のアダプター。
 
 ```typescript
 import { PrismaAdapter } from '@tool-chain/db';
@@ -535,16 +535,16 @@ const adapter = new PrismaAdapter();
 
 #### `DrizzleAdapter`
 
-Adapter for Drizzle ORM.
+Drizzle ORM用のアダプター。
 
 ```typescript
 import { DrizzleAdapter } from '@tool-chain/db';
 const adapter = new DrizzleAdapter();
 ```
 
-## Error Handling
+## エラーハンドリング
 
-Use the `withoutThrow` option to handle errors gracefully:
+`withoutThrow`オプションを使用してエラーを適切に処理します：
 
 ```typescript
 const result = await new Chains()
@@ -553,15 +553,15 @@ const result = await new Chains()
   .invoke();
 
 if (result.error) {
-  console.error('User not found:', result.error);
+  console.error('ユーザーが見つかりません：', result.error);
 } else {
-  console.log('User:', result.data);
+  console.log('ユーザー：', result.data);
 }
 ```
 
-## Advanced Features
+## 高度な機能
 
-### Retry on Failure
+### 失敗時のリトライ
 
 ```typescript
 const user = await new Chains()
@@ -570,7 +570,7 @@ const user = await new Chains()
   .invoke();
 ```
 
-### Timeout
+### タイムアウト
 
 ```typescript
 const user = await new Chains()
@@ -579,7 +579,7 @@ const user = await new Chains()
   .invoke();
 ```
 
-### Accessing Previous Results
+### 前のステップの結果にアクセス
 
 ```typescript
 const result = await new Chains()
@@ -587,36 +587,36 @@ const result = await new Chains()
   .chain(getUser(1))
   .chain(getUserPosts(2))
   .chain((results) => {
-    // results.r1 - first operation result (user)
-    // results.r2 - second operation result (posts)
+    // results.r1 - 最初の操作の結果（user）
+    // results.r2 - 2番目の操作の結果（posts）
     return someOperation(results.r1, results.r2);
   })
   .invoke();
 ```
 
-## TypeScript Support
+## TypeScriptサポート
 
-This library is written in TypeScript and provides excellent type inference:
+このライブラリはTypeScriptで書かれており、優れた型推論を提供します：
 
 ```typescript
 const result = await new Chains()
   .use(db, adapter)
-  .chain(getUser(1)) // Returns User
+  .chain(getUser(1)) // Userを返す
   .chain((results) => {
-    // results.r1 is inferred as User
+    // results.r1はUserとして推論される
     return getUserPosts(results.r1.id);
   })
-  .invoke(); // Inferred as Post[]
+  .invoke(); // Post[]として推論される
 ```
 
-## License
+## ライセンス
 
 MIT © HU SHUKANG
 
-## Contributing
+## コントリビューション
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+コントリビューションを歓迎します！お気軽にPull Requestを提出してください。
 
-## Support
+## サポート
 
-If you have any questions or issues, please open an issue on [GitHub](https://github.com/yourusername/tool-chain-db).
+質問や問題がある場合は、[GitHub](https://github.com/yourusername/tool-chain-db)でissueを開いてください。

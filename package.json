@@ -1,7 +1,7 @@
 {
   "name": "@tool-chain/db",
   "version": "1.0.0",
-  "description": "数据库链式操作库 - 基于 @tool-chain/core,支持 Kysely 和 TypeORM",
+  "description": "数据库链式操作库 - 基于 @tool-chain/core，支持 Kysely、TypeORM、Drizzle ORM、Prisma等多种 ORM 框架，实现统一的链式数据库操作体验。",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/types/index.d.ts",

@@ -1,15 +1,16 @@
 /**
- * Prisma 适配器
- * 将 Prisma 的事务 API 适配到 DbAdapter 接口
+ * Prisma adapter
+ * Adapts Prisma transaction API to DbAdapter interface
  */
 import type { PrismaClient } from '@prisma/client';
 
+import { Chains } from '../chains';
 import type { DbAdapter } from '../types';
 
 /**
- * Prisma 数据库适配器
+ * Prisma database adapter
  *
- * 支持任何 PrismaClient 实例
+ * Supports any PrismaClient instance
  *
  * @example
  * import { PrismaClient } from '@prisma/client';
@@ -25,22 +26,66 @@ import type { DbAdapter } from '../types';
  */
 export class PrismaAdapter implements DbAdapter<PrismaClient> {
   /**
-   * 执行 Prisma 事务
+   * Execute Prisma transaction
    *
-   * Prisma 事务机制：
-   * 1. prisma.$transaction() 创建事务上下文
-   * 2. callback 接收 Prisma 事务客户端实例
-   * 3. 如果 callback 成功完成，自动 commit
-   * 4. 如果 callback 抛出异常，自动 rollback
+   * Prisma transaction mechanism:
+   * 1. prisma.$transaction() creates transaction context
+   * 2. callback receives Prisma transaction client instance
+   * 3. If callback completes successfully, auto commit
+   * 4. If callback throws exception, auto rollback
    *
-   * @param prisma PrismaClient 实例
-   * @param fn 事务函数，接收事务客户端作为参数
-   * @returns 事务函数的返回值
+   * @param prisma PrismaClient instance
+   * @param fn Transaction function that receives transaction client as parameter
+   * @returns Return value of the transaction function
    */
   async transaction<R>(prisma: PrismaClient, fn: (trx: PrismaClient) => Promise<R>): Promise<R> {
     return await prisma.$transaction(async (tx) => {
-      // Prisma 的 tx 是 Omit<PrismaClient, ...> 类型，需要进行类型转换
+      // Prisma's tx is Omit<PrismaClient, ...> type, needs type conversion
       return await fn(tx as unknown as PrismaClient);
     });
+  }
+}
+
+/**
+ * Convenience Chains class for Prisma
+ * Automatically uses PrismaAdapter, no need to pass adapter manually
+ *
+ * @example
+ * import { PrismaClient } from '@prisma/client';
+ * import { ChainsWithPrisma } from '@tool-chain/db';
+ *
+ * const prisma = new PrismaClient();
+ *
+ * // Non-transaction mode
+ * const user = await new ChainsWithPrisma()
+ *   .use(prisma)
+ *   .chain(getUser(123))
+ *   .invoke();
+ *
+ * // Transaction mode
+ * const result = await new ChainsWithPrisma()
+ *   .transaction(prisma)
+ *   .chain(createUser({ name: 'Alice' }))
+ *   .invoke();
+ */
+export class ChainsWithPrisma {
+  private adapter = new PrismaAdapter();
+
+  /**
+   * Inject Prisma client instance (non-transaction mode)
+   * @param prisma PrismaClient instance
+   * @returns New Chains instance with PrismaAdapter pre-configured
+   */
+  use(prisma: PrismaClient): Chains<PrismaClient> {
+    return new Chains<PrismaClient>().use(prisma, this.adapter);
+  }
+
+  /**
+   * Enable transaction mode
+   * @param prisma PrismaClient instance
+   * @returns New Chains instance with PrismaAdapter pre-configured
+   */
+  transaction(prisma: PrismaClient): Chains<PrismaClient> {
+    return new Chains<PrismaClient>().transaction(prisma, this.adapter);
   }
 }

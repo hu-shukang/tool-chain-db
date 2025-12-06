@@ -1,17 +1,18 @@
 /**
- * TypeORM 适配器
- * 将 TypeORM 的事务 API 适配到 DbAdapter 接口
+ * TypeORM adapter
+ * Adapts TypeORM transaction API to DbAdapter interface
  */
 import { DataSource, EntityManager } from 'typeorm';
 
+import { Chains } from '../chains';
 import type { DbAdapter } from '../types';
 
 /**
- * TypeORM 数据库适配器
+ * TypeORM database adapter
  *
- * 支持两种输入：
- * 1. DataSource - 数据源实例，会创建新事务
- * 2. EntityManager - 实体管理器，如果已在事务中则复用
+ * Supports two input types:
+ * 1. DataSource - Data source instance, will create new transaction
+ * 2. EntityManager - Entity manager, will reuse if already in transaction
  *
  * @example
  * import { DataSource } from 'typeorm';
@@ -29,27 +30,72 @@ import type { DbAdapter } from '../types';
  */
 export class TypeORMAdapter implements DbAdapter<DataSource | EntityManager> {
   /**
-   * 执行 TypeORM 事务
+   * Execute TypeORM transaction
    *
-   * TypeORM 事务机制：
-   * 1. DataSource.transaction(callback) 创建新事务
-   * 2. callback 接收 EntityManager 实例
-   * 3. EntityManager 用于执行数据库操作
-   * 4. 如果 callback 成功完成，自动 commit
-   * 5. 如果 callback 抛出异常，自动 rollback
+   * TypeORM transaction mechanism:
+   * 1. DataSource.transaction(callback) creates new transaction
+   * 2. callback receives EntityManager instance
+   * 3. EntityManager is used to execute database operations
+   * 4. If callback completes successfully, auto commit
+   * 5. If callback throws exception, auto rollback
    *
-   * @param db DataSource 或 EntityManager 实例
-   * @param fn 事务函数，接收 EntityManager 作为参数
-   * @returns 事务函数的返回值
+   * @param db DataSource or EntityManager instance
+   * @param fn Transaction function that receives EntityManager as parameter
+   * @returns Return value of the transaction function
    */
   async transaction<R>(db: DataSource | EntityManager, fn: (trx: EntityManager) => Promise<R>): Promise<R> {
     if (db instanceof DataSource) {
-      // db 是 DataSource，创建新事务
+      // db is DataSource, create new transaction
       return await db.transaction(fn);
     } else {
-      // db 已经是 EntityManager（可能已在事务中）
-      // 直接使用当前的 EntityManager
+      // db is already EntityManager (might already be in transaction)
+      // Directly use current EntityManager
       return await fn(db);
     }
+  }
+}
+
+/**
+ * Convenience Chains class for TypeORM
+ * Automatically uses TypeORMAdapter, no need to pass adapter manually
+ *
+ * @example
+ * import { DataSource } from 'typeorm';
+ * import { ChainsWithTypeORM } from '@tool-chain/db';
+ *
+ * const dataSource = new DataSource({ ... });
+ * await dataSource.initialize();
+ *
+ * // Non-transaction mode
+ * const user = await new ChainsWithTypeORM()
+ *   .use(dataSource)
+ *   .chain(getUser(123))
+ *   .invoke();
+ *
+ * // Transaction mode
+ * const result = await new ChainsWithTypeORM()
+ *   .transaction(dataSource)
+ *   .chain(createUser({ name: 'Alice' }))
+ *   .invoke();
+ */
+export class ChainsWithTypeORM {
+  private adapter = new TypeORMAdapter();
+
+  /**
+   * Inject TypeORM DataSource or EntityManager instance (non-transaction mode)
+   * @param db DataSource or EntityManager instance
+   * @returns New Chains instance with TypeORMAdapter pre-configured
+   */
+  use(db: DataSource | EntityManager): Chains<DataSource | EntityManager> {
+    return new Chains<DataSource | EntityManager>().use(db, this.adapter);
+  }
+
+  /**
+   * Enable transaction mode
+   * @param db DataSource or EntityManager instance
+   * @returns New Chains instance with TypeORMAdapter pre-configured
+   */
+  transaction(db: DataSource | EntityManager): Chains<DataSource | EntityManager> {
+    return new Chains<DataSource | EntityManager>().transaction(db, this.adapter);
   }
 }
