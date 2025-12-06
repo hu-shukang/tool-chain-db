@@ -11,11 +11,13 @@
  */
 
 // 导出核心类和工厂函数
-export { Chains, createChains } from './chains';
+export * from './chains';
 
 // 导出适配器
-export { KyselyAdapter } from './adapters/kysely';
-export { TypeORMAdapter } from './adapters/typeorm';
+export * from './adapters/kysely';
+export * from './adapters/typeorm';
+export * from './adapters/prisma';
+export * from './adapters/drizzle';
 
 // 导出类型
-export type { DbContext, DbAdapter, DbServiceFn, DbResultsFn, DbFunction } from './types';
+export * from './types';
