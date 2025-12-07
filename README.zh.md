@@ -40,6 +40,23 @@ npm install @prisma/client
 npm install drizzle-orm
 ```
 
+## 导入
+
+为了避免加载不必要的依赖，适配器应该从其特定子路径导入：
+
+```typescript
+// 导入核心类和类型
+import { Chains } from '@tool-chain/db';
+
+// 导入特定适配器（仅导入需要的）
+import { KyselyAdapter, ChainsWithKysely } from '@tool-chain/db/kysely';
+import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm';
+import { PrismaAdapter, ChainsWithPrisma } from '@tool-chain/db/prisma';
+import { DrizzleAdapter, ChainsWithDrizzle } from '@tool-chain/db/drizzle';
+```
+
+这确保如果你仅使用 Kysely，TypeORM 不会被加载，你也不会因为缺少 TypeORM 依赖而出错。
+
 ## 快速开始
 
 ### 基础用法
@@ -49,7 +66,7 @@ npm install drizzle-orm
 **方式一：使用便利类（推荐）**
 
 ```typescript
-import { ChainsWithKysely } from '@tool-chain/db';
+import { ChainsWithKysely } from '@tool-chain/db/kysely';
 import { Kysely } from 'kysely';
 
 // 定义你的 service 函数
@@ -73,7 +90,8 @@ const user = await new ChainsWithKysely<Database>()
 **方式二：使用通用 Chains 类**
 
 ```typescript
-import { Chains, KyselyAdapter } from '@tool-chain/db';
+import { Chains } from '@tool-chain/db';
+import { KyselyAdapter } from '@tool-chain/db/kysely';
 import { Kysely } from 'kysely';
 
 // 定义你的 service 函数
@@ -99,7 +117,7 @@ const user = await new Chains()
 **使用便利类：**
 
 ```typescript
-import { ChainsWithKysely } from '@tool-chain/db';
+import { ChainsWithKysely } from '@tool-chain/db/kysely';
 
 function createUser(data: { name: string; email: string }) {
   return (db: Kysely<Database>) => {
@@ -131,7 +149,8 @@ const result = await new ChainsWithKysely<Database>()
 **使用通用 Chains 类：**
 
 ```typescript
-import { Chains, KyselyAdapter } from '@tool-chain/db';
+import { Chains } from '@tool-chain/db';
+import { KyselyAdapter } from '@tool-chain/db/kysely';
 
 const result = await new Chains()
   .transaction(db, new KyselyAdapter())
@@ -147,7 +166,8 @@ const result = await new Chains()
 ```typescript
 import { Kysely, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
-import { Chains, KyselyAdapter } from '@tool-chain/db';
+import { Chains } from '@tool-chain/db';
+import { KyselyAdapter } from '@tool-chain/db/kysely';
 
 interface Database {
   user: {
@@ -219,7 +239,8 @@ const newPost = await new Chains()
 
 ```typescript
 import { DataSource } from 'typeorm';
-import { Chains, TypeORMAdapter } from '@tool-chain/db';
+import { Chains } from '@tool-chain/db';
+import { TypeORMAdapter } from '@tool-chain/db/typeorm';
 import { User } from './entities/User';
 import { Post } from './entities/Post';
 
@@ -284,7 +305,8 @@ const newPost = await new Chains()
 
 ```typescript
 import { PrismaClient } from '@prisma/client';
-import { Chains, PrismaAdapter } from '@tool-chain/db';
+import { Chains } from '@tool-chain/db';
+import { PrismaAdapter } from '@tool-chain/db/prisma';
 
 // 初始化 Prisma
 const prisma = new PrismaClient();
@@ -336,7 +358,8 @@ const newPost = await new Chains()
 ```typescript
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import Database from 'better-sqlite3';
-import { Chains, DrizzleAdapter } from '@tool-chain/db';
+import { Chains } from '@tool-chain/db';
+import { DrizzleAdapter } from '@tool-chain/db/drizzle';
 import { users, posts } from './schema';
 import { eq } from 'drizzle-orm';
 
@@ -455,7 +478,7 @@ const newPost = await new Chains()
 Kysely 的便利类，已预配置适配器。
 
 ```typescript
-import { ChainsWithKysely } from '@tool-chain/db';
+import { ChainsWithKysely } from '@tool-chain/db/kysely';
 
 const result = await new ChainsWithKysely<Database>()
   .use(db)
@@ -468,7 +491,7 @@ const result = await new ChainsWithKysely<Database>()
 TypeORM 的便利类，已预配置适配器。
 
 ```typescript
-import { ChainsWithTypeORM } from '@tool-chain/db';
+import { ChainsWithTypeORM } from '@tool-chain/db/typeorm';
 
 const result = await new ChainsWithTypeORM()
   .use(dataSource)
@@ -481,7 +504,7 @@ const result = await new ChainsWithTypeORM()
 Prisma 的便利类，已预配置适配器。
 
 ```typescript
-import { ChainsWithPrisma } from '@tool-chain/db';
+import { ChainsWithPrisma } from '@tool-chain/db/prisma';
 
 const result = await new ChainsWithPrisma()
   .use(prisma)
@@ -494,7 +517,7 @@ const result = await new ChainsWithPrisma()
 Drizzle ORM 的便利类，已预配置适配器。
 
 ```typescript
-import { ChainsWithDrizzle } from '@tool-chain/db';
+import { ChainsWithDrizzle } from '@tool-chain/db/drizzle';
 
 const result = await new ChainsWithDrizzle()
   .use(db)
@@ -511,7 +534,7 @@ const result = await new ChainsWithDrizzle()
 Kysely ORM 的适配器。
 
 ```typescript
-import { KyselyAdapter } from '@tool-chain/db';
+import { KyselyAdapter } from '@tool-chain/db/kysely';
 const adapter = new KyselyAdapter<Database>();
 ```
 
@@ -520,7 +543,7 @@ const adapter = new KyselyAdapter<Database>();
 TypeORM 的适配器。
 
 ```typescript
-import { TypeORMAdapter } from '@tool-chain/db';
+import { TypeORMAdapter } from '@tool-chain/db/typeorm';
 const adapter = new TypeORMAdapter();
 ```
 
@@ -529,7 +552,7 @@ const adapter = new TypeORMAdapter();
 Prisma ORM 的适配器。
 
 ```typescript
-import { PrismaAdapter } from '@tool-chain/db';
+import { PrismaAdapter } from '@tool-chain/db/prisma';
 const adapter = new PrismaAdapter();
 ```
 
@@ -538,7 +561,7 @@ const adapter = new PrismaAdapter();
 Drizzle ORM 的适配器。
 
 ```typescript
-import { DrizzleAdapter } from '@tool-chain/db';
+import { DrizzleAdapter } from '@tool-chain/db/drizzle';
 const adapter = new DrizzleAdapter();
 ```
 

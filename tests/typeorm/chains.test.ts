@@ -4,7 +4,8 @@
  */
 import { DataSource, EntityManager } from 'typeorm';
 
-import { Chains, TypeORMAdapter } from '../../src/index';
+import { Chains } from '../../src/index';
+import { TypeORMAdapter } from '../../src/adapters/typeorm';
 import { Book, User, cleanupDataSource, createTestDataSource, getManager, seedTestData } from './setup';
 
 describe('chains with TypeORM', () => {

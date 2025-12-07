@@ -9,6 +9,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.2] - 2025-12-07
+
+### Fixed
+- 🐛 Fixed "Cannot find module" error when using only one ORM (e.g., using Kysely but getting errors about missing TypeORM)
+- 🐛 Resolved optional peer dependency loading issue - now only the ORM you use will be loaded
+
+### Changed
+- 🔧 **Breaking Change**: Adapters must now be imported from subpaths to avoid loading unnecessary dependencies
+  - Before: `import { KyselyAdapter } from '@tool-chain/db'`
+  - After: `import { KyselyAdapter } from '@tool-chain/db/kysely'`
+- 🔧 Added package.json subpath exports for each adapter:
+  - `@tool-chain/db/kysely` - Kysely adapter and convenience classes
+  - `@tool-chain/db/typeorm` - TypeORM adapter and convenience classes
+  - `@tool-chain/db/prisma` - Prisma adapter and convenience classes
+  - `@tool-chain/db/drizzle` - Drizzle adapter and convenience classes
+- 📚 Updated all documentation (English, Chinese, Japanese) with new import instructions
+- 🔧 Updated test files to use new import paths
+
+### Technical
+- Removed adapter exports from main entry point (`src/index.ts`)
+- Added subpath exports configuration in `package.json`
+- Main entry point now only exports core `Chains` class and types
+
+### Migration Guide
+If you're upgrading from 1.0.1, update your imports:
+
+```typescript
+// Old (will no longer work)
+import { KyselyAdapter, ChainsWithKysely } from '@tool-chain/db';
+import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db';
+
+// New (correct)
+import { Chains } from '@tool-chain/db';
+import { KyselyAdapter, ChainsWithKysely } from '@tool-chain/db/kysely';
+import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm';
+```
+
+---
+
 ## [1.0.1] - 2025-12-07
 
 ### Changed

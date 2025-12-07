@@ -40,6 +40,23 @@ npm install @prisma/client
 npm install drizzle-orm
 ```
 
+## Importing
+
+To avoid loading unnecessary dependencies, adapters should be imported from their specific subpaths:
+
+```typescript
+// Import core classes and types
+import { Chains } from '@tool-chain/db';
+
+// Import specific adapters (only the ones you need)
+import { KyselyAdapter, ChainsWithKysely } from '@tool-chain/db/kysely';
+import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm';
+import { PrismaAdapter, ChainsWithPrisma } from '@tool-chain/db/prisma';
+import { DrizzleAdapter, ChainsWithDrizzle } from '@tool-chain/db/drizzle';
+```
+
+This ensures that if you only use Kysely, TypeORM won't be loaded and you won't get errors about missing TypeORM dependencies.
+
 ## Quick Start
 
 ### Basic Usage
@@ -49,7 +66,7 @@ There are two ways to use this library:
 **Option 1: Using Convenience Classes (Recommended)**
 
 ```typescript
-import { ChainsWithKysely } from '@tool-chain/db';
+import { ChainsWithKysely } from '@tool-chain/db/kysely';
 import { Kysely } from 'kysely';
 
 // Define your service functions
@@ -73,7 +90,8 @@ const user = await new ChainsWithKysely<Database>()
 **Option 2: Using Generic Chains Class**
 
 ```typescript
-import { Chains, KyselyAdapter } from '@tool-chain/db';
+import { Chains } from '@tool-chain/db';
+import { KyselyAdapter } from '@tool-chain/db/kysely';
 import { Kysely } from 'kysely';
 
 // Define your service functions
@@ -99,7 +117,7 @@ const user = await new Chains()
 **Using Convenience Class:**
 
 ```typescript
-import { ChainsWithKysely } from '@tool-chain/db';
+import { ChainsWithKysely } from '@tool-chain/db/kysely';
 
 function createUser(data: { name: string; email: string }) {
   return (db: Kysely<Database>) => {
@@ -131,7 +149,8 @@ const result = await new ChainsWithKysely<Database>()
 **Using Generic Chains Class:**
 
 ```typescript
-import { Chains, KyselyAdapter } from '@tool-chain/db';
+import { Chains } from '@tool-chain/db';
+import { KyselyAdapter } from '@tool-chain/db/kysely';
 
 const result = await new Chains()
   .transaction(db, new KyselyAdapter())
@@ -147,7 +166,8 @@ const result = await new Chains()
 ```typescript
 import { Kysely, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
-import { Chains, KyselyAdapter } from '@tool-chain/db';
+import { Chains } from '@tool-chain/db';
+import { KyselyAdapter } from '@tool-chain/db/kysely';
 
 interface Database {
   user: {
@@ -219,7 +239,8 @@ const newPost = await new Chains()
 
 ```typescript
 import { DataSource } from 'typeorm';
-import { Chains, TypeORMAdapter } from '@tool-chain/db';
+import { Chains } from '@tool-chain/db';
+import { TypeORMAdapter } from '@tool-chain/db/typeorm';
 import { User } from './entities/User';
 import { Post } from './entities/Post';
 
@@ -284,7 +305,8 @@ const newPost = await new Chains()
 
 ```typescript
 import { PrismaClient } from '@prisma/client';
-import { Chains, PrismaAdapter } from '@tool-chain/db';
+import { Chains } from '@tool-chain/db';
+import { PrismaAdapter } from '@tool-chain/db/prisma';
 
 // Initialize Prisma
 const prisma = new PrismaClient();
@@ -336,7 +358,8 @@ const newPost = await new Chains()
 ```typescript
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import Database from 'better-sqlite3';
-import { Chains, DrizzleAdapter } from '@tool-chain/db';
+import { Chains } from '@tool-chain/db';
+import { DrizzleAdapter } from '@tool-chain/db/drizzle';
 import { users, posts } from './schema';
 import { eq } from 'drizzle-orm';
 
@@ -455,7 +478,7 @@ These classes provide a simpler API by pre-configuring the appropriate adapter f
 Convenience class for Kysely with pre-configured adapter.
 
 ```typescript
-import { ChainsWithKysely } from '@tool-chain/db';
+import { ChainsWithKysely } from '@tool-chain/db/kysely';
 
 const result = await new ChainsWithKysely<Database>()
   .use(db)
@@ -468,7 +491,7 @@ const result = await new ChainsWithKysely<Database>()
 Convenience class for TypeORM with pre-configured adapter.
 
 ```typescript
-import { ChainsWithTypeORM } from '@tool-chain/db';
+import { ChainsWithTypeORM } from '@tool-chain/db/typeorm';
 
 const result = await new ChainsWithTypeORM()
   .use(dataSource)
@@ -481,7 +504,7 @@ const result = await new ChainsWithTypeORM()
 Convenience class for Prisma with pre-configured adapter.
 
 ```typescript
-import { ChainsWithPrisma } from '@tool-chain/db';
+import { ChainsWithPrisma } from '@tool-chain/db/prisma';
 
 const result = await new ChainsWithPrisma()
   .use(prisma)
@@ -494,7 +517,7 @@ const result = await new ChainsWithPrisma()
 Convenience class for Drizzle ORM with pre-configured adapter.
 
 ```typescript
-import { ChainsWithDrizzle } from '@tool-chain/db';
+import { ChainsWithDrizzle } from '@tool-chain/db/drizzle';
 
 const result = await new ChainsWithDrizzle()
   .use(db)
@@ -511,7 +534,7 @@ These adapters can be used with the generic `Chains` class if you prefer explici
 Adapter for Kysely ORM.
 
 ```typescript
-import { KyselyAdapter } from '@tool-chain/db';
+import { KyselyAdapter } from '@tool-chain/db/kysely';
 const adapter = new KyselyAdapter<Database>();
 ```
 
@@ -520,7 +543,7 @@ const adapter = new KyselyAdapter<Database>();
 Adapter for TypeORM.
 
 ```typescript
-import { TypeORMAdapter } from '@tool-chain/db';
+import { TypeORMAdapter } from '@tool-chain/db/typeorm';
 const adapter = new TypeORMAdapter();
 ```
 
@@ -529,7 +552,7 @@ const adapter = new TypeORMAdapter();
 Adapter for Prisma ORM.
 
 ```typescript
-import { PrismaAdapter } from '@tool-chain/db';
+import { PrismaAdapter } from '@tool-chain/db/prisma';
 const adapter = new PrismaAdapter();
 ```
 
@@ -538,7 +561,7 @@ const adapter = new PrismaAdapter();
 Adapter for Drizzle ORM.
 
 ```typescript
-import { DrizzleAdapter } from '@tool-chain/db';
+import { DrizzleAdapter } from '@tool-chain/db/drizzle';
 const adapter = new DrizzleAdapter();
 ```
 

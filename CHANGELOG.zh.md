@@ -9,6 +9,45 @@
 
 ---
 
+## [1.0.2] - 2025-12-07
+
+### 修复
+- 🐛 修复了只使用一个 ORM 时出现"找不到模块"的错误（例如，使用 Kysely 却报缺少 TypeORM 的错误）
+- 🐛 解决了可选 peer 依赖加载问题 - 现在只会加载你实际使用的 ORM
+
+### 变更
+- 🔧 **破坏性变更**：适配器现在必须从子路径导入，以避免加载不必要的依赖
+  - 旧方式：`import { KyselyAdapter } from '@tool-chain/db'`
+  - 新方式：`import { KyselyAdapter } from '@tool-chain/db/kysely'`
+- 🔧 在 package.json 中为每个适配器添加了子路径导出：
+  - `@tool-chain/db/kysely` - Kysely 适配器和便利类
+  - `@tool-chain/db/typeorm` - TypeORM 适配器和便利类
+  - `@tool-chain/db/prisma` - Prisma 适配器和便利类
+  - `@tool-chain/db/drizzle` - Drizzle 适配器和便利类
+- 📚 更新了所有文档（英文、中文、日文）的导入说明
+- 🔧 更新了测试文件以使用新的导入路径
+
+### 技术细节
+- 从主入口文件（`src/index.ts`）中移除了适配器导出
+- 在 `package.json` 中添加了子路径导出配置
+- 主入口现在只导出核心 `Chains` 类和类型
+
+### 迁移指南
+如果你从 1.0.1 升级，请更新你的导入语句：
+
+```typescript
+// 旧方式（不再可用）
+import { KyselyAdapter, ChainsWithKysely } from '@tool-chain/db';
+import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db';
+
+// 新方式（正确）
+import { Chains } from '@tool-chain/db';
+import { KyselyAdapter, ChainsWithKysely } from '@tool-chain/db/kysely';
+import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm';
+```
+
+---
+
 ## [1.0.1] - 2025-12-07
 
 ### 变更

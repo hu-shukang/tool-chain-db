@@ -13,11 +13,12 @@
 // Export core classes and factory functions
 export * from './chains';
 
-// Export adapters
-export * from './adapters/kysely';
-export * from './adapters/typeorm';
-export * from './adapters/prisma';
-export * from './adapters/drizzle';
-
 // Export types
 export * from './types';
+
+// Note: Adapters should be imported from their specific subpaths to avoid
+// loading unnecessary dependencies:
+// - import { KyselyAdapter, ChainsWithKysely } from '@tool-chain/db/kysely'
+// - import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm'
+// - import { PrismaAdapter, ChainsWithPrisma } from '@tool-chain/db/prisma'
+// - import { DrizzleAdapter, ChainsWithDrizzle } from '@tool-chain/db/drizzle'

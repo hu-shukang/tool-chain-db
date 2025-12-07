@@ -1,6 +1,6 @@
 {
   "name": "@tool-chain/db",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "数据库链式操作库 - 基于 @tool-chain/core，支持 Kysely、TypeORM、Drizzle ORM、Prisma等多种 ORM 框架，实现统一的链式数据库操作体验。",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
@@ -10,6 +10,26 @@
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js",
       "types": "./dist/types/index.d.ts"
+    },
+    "./kysely": {
+      "import": "./dist/esm/adapters/kysely.js",
+      "require": "./dist/cjs/adapters/kysely.js",
+      "types": "./dist/types/adapters/kysely.d.ts"
+    },
+    "./typeorm": {
+      "import": "./dist/esm/adapters/typeorm.js",
+      "require": "./dist/cjs/adapters/typeorm.js",
+      "types": "./dist/types/adapters/typeorm.d.ts"
+    },
+    "./prisma": {
+      "import": "./dist/esm/adapters/prisma.js",
+      "require": "./dist/cjs/adapters/prisma.js",
+      "types": "./dist/types/adapters/prisma.d.ts"
+    },
+    "./drizzle": {
+      "import": "./dist/esm/adapters/drizzle.js",
+      "require": "./dist/cjs/adapters/drizzle.js",
+      "types": "./dist/types/adapters/drizzle.d.ts"
     }
   },
   "files": [

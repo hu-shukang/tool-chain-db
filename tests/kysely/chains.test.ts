@@ -4,7 +4,8 @@
  */
 import { Kysely } from 'kysely';
 
-import { Chains, KyselyAdapter } from '../../src/index';
+import { Chains } from '../../src/index';
+import { KyselyAdapter } from '../../src/adapters/kysely';
 import { BookTable, TestDatabase, UserTable, cleanupDb, createTestDb, seedTestData, setupTables } from './setup';
 
 describe('chains', () => {

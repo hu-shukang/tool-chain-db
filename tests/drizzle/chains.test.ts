@@ -4,7 +4,8 @@
  */
 import { eq, sql } from 'drizzle-orm';
 
-import { Chains, DrizzleAdapter } from '../../src/index';
+import { Chains } from '../../src/index';
+import { DrizzleAdapter } from '../../src/adapters/drizzle';
 import {
   type BookTable,
   type TestDatabase,

@@ -4,7 +4,8 @@
  */
 import { PrismaClient } from '@prisma/client';
 
-import { Chains, PrismaAdapter } from '../../src/index';
+import { Chains } from '../../src/index';
+import { PrismaAdapter } from '../../src/adapters/prisma';
 import {
   type BookTable,
   type TestPrismaClient,

@@ -9,6 +9,45 @@
 
 ---
 
+## [1.0.2] - 2025-12-07
+
+### 修正
+- 🐛 1つのORMのみを使用する場合の「モジュールが見つかりません」エラーを修正（例：Kyselyを使用しているのにTypeORMが見つからないエラーが発生する問題）
+- 🐛 オプションのpeer dependencyロード問題を解決 - 実際に使用するORMのみがロードされるようになりました
+
+### 変更
+- 🔧 **破壊的変更**：不要な依存関係のロードを避けるため、アダプターはサブパスからインポートする必要があります
+  - 以前：`import { KyselyAdapter } from '@tool-chain/db'`
+  - 以後：`import { KyselyAdapter } from '@tool-chain/db/kysely'`
+- 🔧 各アダプター用のpackage.jsonサブパスエクスポートを追加：
+  - `@tool-chain/db/kysely` - Kyselyアダプターと便利クラス
+  - `@tool-chain/db/typeorm` - TypeORMアダプターと便利クラス
+  - `@tool-chain/db/prisma` - Prismaアダプターと便利クラス
+  - `@tool-chain/db/drizzle` - Drizzleアダプターと便利クラス
+- 📚 すべてのドキュメント（英語、中国語、日本語）を新しいインポート方法で更新
+- 🔧 テストファイルを新しいインポートパスで更新
+
+### 技術的な詳細
+- メインエントリーポイント（`src/index.ts`）からアダプターのエクスポートを削除
+- `package.json` にサブパスエクスポート設定を追加
+- メインエントリーポイントは核心的な `Chains` クラスと型のみをエクスポート
+
+### マイグレーションガイド
+1.0.1からアップグレードする場合は、インポート文を更新してください：
+
+```typescript
+// 旧（動作しなくなります）
+import { KyselyAdapter, ChainsWithKysely } from '@tool-chain/db';
+import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db';
+
+// 新（正しい方法）
+import { Chains } from '@tool-chain/db';
+import { KyselyAdapter, ChainsWithKysely } from '@tool-chain/db/kysely';
+import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm';
+```
+
+---
+
 ## [1.0.1] - 2025-12-07
 
 ### 変更
