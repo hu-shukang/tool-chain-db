@@ -23,9 +23,9 @@
   },
   "scripts": {
     "build": "npm run build:esm && npm run build:cjs && npm run build:types",
-    "build:esm": "tsc --module esnext --outDir dist/esm",
-    "build:cjs": "tsc --module commonjs --outDir dist/cjs",
-    "build:types": "tsc --emitDeclarationOnly --outDir dist/types",
+    "build:esm": "tsc --project tsconfig.build.json --module esnext --outDir dist/esm",
+    "build:cjs": "tsc --project tsconfig.build.json --module commonjs --outDir dist/cjs",
+    "build:types": "tsc --project tsconfig.build.json --emitDeclarationOnly --outDir dist/types",
     "dev": "tsc --watch",
     "test": "jest",
     "test:watch": "jest --watch",
