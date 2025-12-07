@@ -9,6 +9,18 @@
 
 ---
 
+## [1.0.1] - 2025-12-07
+
+### 变更
+- 🔧 更新构建脚本，使用独立的 `tsconfig.build.json` 配置文件进行编译
+- 🔧 优化 TypeScript 构建配置，分离开发和构建环境的配置
+
+### 技术细节
+- 新增 `tsconfig.build.json` 文件用于生产构建
+- 更新 `package.json` 中的构建脚本，使用 `--project tsconfig.build.json` 参数
+
+---
+
 ## [1.0.0] - 2024-12-06
 
 ### 新增功能

@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.1] - 2025-12-07
+
+### Changed
+- 🔧 Updated build scripts to use separate `tsconfig.build.json` configuration file
+- 🔧 Optimized TypeScript build configuration, separating development and build environment settings
+
+### Technical
+- Added `tsconfig.build.json` file for production builds
+- Updated build scripts in `package.json` to use `--project tsconfig.build.json` parameter
+
+---
+
 ## [1.0.0] - 2024-12-06
 
 ### Added
