@@ -1,6 +1,6 @@
 {
   "name": "@tool-chain/db",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "数据库链式操作库 - 基于 @tool-chain/core，支持 Kysely、TypeORM、Drizzle ORM、Prisma等多种 ORM 框架，实现统一的链式数据库操作体验。",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",

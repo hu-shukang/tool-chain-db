@@ -1,11 +1,13 @@
 # @tool-chain/db
 
 [![npm version](https://img.shields.io/npm/v/@tool-chain/db.svg)](https://www.npmjs.com/package/@tool-chain/db)
+[![npm downloads](https://img.shields.io/npm/dm/@tool-chain/db.svg)](https://www.npmjs.com/package/@tool-chain/db)
+[![Node.js Version](https://img.shields.io/node/v/@tool-chain/db.svg)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-[@tool-chain/core](https://github.com/yourusername/tool-chain-core) をベースにしたデータベースチェーン操作ライブラリ。複数のORMフレームワークに対応し、組み合わせ可能なデータベース操作の構築を目的として設計されています。
+[@tool-chain/core](https://github.com/hu-shukang/tool-chain-core) をベースにしたデータベースチェーン操作ライブラリ。複数のORMフレームワークに対応し、組み合わせ可能なデータベース操作の構築を目的として設計されています。
 
-[English](./README.md) | [中文文档](./README.zh-CN.md)
+[English](https://github.com/hu-shukang/tool-chain-db/blob/main/README.md) | [中文文档](https://github.com/hu-shukang/tool-chain-db/blob/main/README.zh.md)
 
 ## 特徴
 
@@ -47,12 +49,11 @@ npm install drizzle-orm
 ```typescript
 // コアクラスと型をインポート
 import { Chains } from '@tool-chain/db';
-
+import { ChainsWithDrizzle, DrizzleAdapter } from '@tool-chain/db/drizzle';
 // 特定のアダプターをインポート（必要なものだけ）
-import { KyselyAdapter, ChainsWithKysely } from '@tool-chain/db/kysely';
-import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm';
-import { PrismaAdapter, ChainsWithPrisma } from '@tool-chain/db/prisma';
-import { DrizzleAdapter, ChainsWithDrizzle } from '@tool-chain/db/drizzle';
+import { ChainsWithKysely, KyselyAdapter } from '@tool-chain/db/kysely';
+import { ChainsWithPrisma, PrismaAdapter } from '@tool-chain/db/prisma';
+import { ChainsWithTypeORM, TypeORMAdapter } from '@tool-chain/db/typeorm';
 ```
 
 これにより、Kyselyのみを使用する場合、TypeORMは読み込まれず、TypeORMの依存関係がないというエラーも発生しません。
@@ -72,19 +73,12 @@ import { Kysely } from 'kysely';
 // サービス関数を定義
 function getUser(id: number) {
   return (db: Kysely<Database>) => {
-    return db
-      .selectFrom('user')
-      .where('id', '=', id)
-      .selectAll()
-      .executeTakeFirstOrThrow();
+    return db.selectFrom('user').where('id', '=', id).selectAll().executeTakeFirstOrThrow();
   };
 }
 
 // チェーンを実行 - adapterを手動で渡す必要なし
-const user = await new ChainsWithKysely<Database>()
-  .use(db)
-  .chain(getUser(123))
-  .invoke();
+const user = await new ChainsWithKysely<Database>().use(db).chain(getUser(123)).invoke();
 ```
 
 **方法2：汎用Chainsクラスを使用**
@@ -97,19 +91,12 @@ import { Kysely } from 'kysely';
 // サービス関数を定義
 function getUser(id: number) {
   return (db: Kysely<Database>) => {
-    return db
-      .selectFrom('user')
-      .where('id', '=', id)
-      .selectAll()
-      .executeTakeFirstOrThrow();
+    return db.selectFrom('user').where('id', '=', id).selectAll().executeTakeFirstOrThrow();
   };
 }
 
 // チェーンを実行 - adapterを明示的に渡す必要あり
-const user = await new Chains()
-  .use(db, new KyselyAdapter())
-  .chain(getUser(123))
-  .invoke();
+const user = await new Chains().use(db, new KyselyAdapter()).chain(getUser(123)).invoke();
 ```
 
 ### トランザクションを使用
@@ -121,21 +108,13 @@ import { ChainsWithKysely } from '@tool-chain/db/kysely';
 
 function createUser(data: { name: string; email: string }) {
   return (db: Kysely<Database>) => {
-    return db
-      .insertInto('user')
-      .values(data)
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    return db.insertInto('user').values(data).returningAll().executeTakeFirstOrThrow();
   };
 }
 
 function createProfile(userId: number) {
   return (db: Kysely<Database>) => {
-    return db
-      .insertInto('profile')
-      .values({ userId })
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    return db.insertInto('profile').values({ userId }).returningAll().executeTakeFirstOrThrow();
   };
 }
 
@@ -164,10 +143,10 @@ const result = await new Chains()
 ### Kysely
 
 ```typescript
-import { Kysely, PostgresDialect } from 'kysely';
-import { Pool } from 'pg';
 import { Chains } from '@tool-chain/db';
 import { KyselyAdapter } from '@tool-chain/db/kysely';
+import { Kysely, PostgresDialect } from 'kysely';
+import { Pool } from 'pg';
 
 interface Database {
   user: {
@@ -230,7 +209,7 @@ const newPost = await new Chains()
       userId: results.r1.id,
       title: 'My First Post',
       content: 'Hello World!',
-    })
+    }),
   )
   .invoke();
 ```
@@ -238,11 +217,12 @@ const newPost = await new Chains()
 ### TypeORM
 
 ```typescript
-import { DataSource } from 'typeorm';
 import { Chains } from '@tool-chain/db';
 import { TypeORMAdapter } from '@tool-chain/db/typeorm';
-import { User } from './entities/User';
+import { DataSource } from 'typeorm';
+
 import { Post } from './entities/Post';
+import { User } from './entities/User';
 
 // TypeORMを初期化
 const dataSource = new DataSource({
@@ -296,7 +276,7 @@ const newPost = await new Chains()
       userId: results.r1.id,
       title: 'My First Post',
       content: 'Hello World!',
-    })
+    }),
   )
   .invoke();
 ```
@@ -348,7 +328,7 @@ const newPost = await new Chains()
       userId: results.r1.id,
       title: 'My First Post',
       content: 'Hello World!',
-    })
+    }),
   )
   .invoke();
 ```
@@ -356,12 +336,13 @@ const newPost = await new Chains()
 ### Drizzle ORM
 
 ```typescript
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import Database from 'better-sqlite3';
 import { Chains } from '@tool-chain/db';
 import { DrizzleAdapter } from '@tool-chain/db/drizzle';
-import { users, posts } from './schema';
+import Database from 'better-sqlite3';
 import { eq } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+
+import { posts, users } from './schema';
 
 // Drizzleを初期化
 const sqlite = new Database('mydb.db');
@@ -404,7 +385,7 @@ const newPost = await new Chains()
       userId: results.r1!.id,
       title: 'My First Post',
       content: 'Hello World!',
-    })
+    }),
   )
   .invoke();
 ```
@@ -438,6 +419,7 @@ const newPost = await new Chains()
 **関数パターン：**
 
 1. **サービス関数パターン（推奨）**
+
    ```typescript
    function getUser(id: number) {
      return (db: Database) => {
@@ -480,10 +462,7 @@ Kysely用の便利クラス、アダプターが事前設定済み。
 ```typescript
 import { ChainsWithKysely } from '@tool-chain/db/kysely';
 
-const result = await new ChainsWithKysely<Database>()
-  .use(db)
-  .chain(getUser(123))
-  .invoke();
+const result = await new ChainsWithKysely<Database>().use(db).chain(getUser(123)).invoke();
 ```
 
 #### `ChainsWithTypeORM`
@@ -493,10 +472,7 @@ TypeORM用の便利クラス、アダプターが事前設定済み。
 ```typescript
 import { ChainsWithTypeORM } from '@tool-chain/db/typeorm';
 
-const result = await new ChainsWithTypeORM()
-  .use(dataSource)
-  .chain(getUser(123))
-  .invoke();
+const result = await new ChainsWithTypeORM().use(dataSource).chain(getUser(123)).invoke();
 ```
 
 #### `ChainsWithPrisma`
@@ -506,10 +482,7 @@ Prisma用の便利クラス、アダプターが事前設定済み。
 ```typescript
 import { ChainsWithPrisma } from '@tool-chain/db/prisma';
 
-const result = await new ChainsWithPrisma()
-  .use(prisma)
-  .chain(getUser(123))
-  .invoke();
+const result = await new ChainsWithPrisma().use(prisma).chain(getUser(123)).invoke();
 ```
 
 #### `ChainsWithDrizzle<TDb>`
@@ -519,10 +492,7 @@ Drizzle ORM用の便利クラス、アダプターが事前設定済み。
 ```typescript
 import { ChainsWithDrizzle } from '@tool-chain/db/drizzle';
 
-const result = await new ChainsWithDrizzle()
-  .use(db)
-  .chain(getUser(123))
-  .invoke();
+const result = await new ChainsWithDrizzle().use(db).chain(getUser(123)).invoke();
 ```
 
 ### アダプター
@@ -535,6 +505,7 @@ Kysely ORM用のアダプター。
 
 ```typescript
 import { KyselyAdapter } from '@tool-chain/db/kysely';
+
 const adapter = new KyselyAdapter<Database>();
 ```
 
@@ -544,6 +515,7 @@ TypeORM用のアダプター。
 
 ```typescript
 import { TypeORMAdapter } from '@tool-chain/db/typeorm';
+
 const adapter = new TypeORMAdapter();
 ```
 
@@ -553,6 +525,7 @@ Prisma ORM用のアダプター。
 
 ```typescript
 import { PrismaAdapter } from '@tool-chain/db/prisma';
+
 const adapter = new PrismaAdapter();
 ```
 
@@ -562,6 +535,7 @@ Drizzle ORM用のアダプター。
 
 ```typescript
 import { DrizzleAdapter } from '@tool-chain/db/drizzle';
+
 const adapter = new DrizzleAdapter();
 ```
 
@@ -570,10 +544,7 @@ const adapter = new DrizzleAdapter();
 `withoutThrow`オプションを使用してエラーを適切に処理します：
 
 ```typescript
-const result = await new Chains()
-  .use(db, adapter)
-  .chain(getUser(999), { withoutThrow: true })
-  .invoke();
+const result = await new Chains().use(db, adapter).chain(getUser(999), { withoutThrow: true }).invoke();
 
 if (result.error) {
   console.error('ユーザーが見つかりません：', result.error);
@@ -587,19 +558,13 @@ if (result.error) {
 ### 失敗時のリトライ
 
 ```typescript
-const user = await new Chains()
-  .use(db, adapter)
-  .chain(getUser(123), { retry: 3 })
-  .invoke();
+const user = await new Chains().use(db, adapter).chain(getUser(123), { retry: 3 }).invoke();
 ```
 
 ### タイムアウト
 
 ```typescript
-const user = await new Chains()
-  .use(db, adapter)
-  .chain(getUser(123), { timeout: 5000 })
-  .invoke();
+const user = await new Chains().use(db, adapter).chain(getUser(123), { timeout: 5000 }).invoke();
 ```
 
 ### 前のステップの結果にアクセス
@@ -642,4 +607,4 @@ MIT © HU SHUKANG
 
 ## サポート
 
-質問や問題がある場合は、[GitHub](https://github.com/yourusername/tool-chain-db)でissueを開いてください。
+質問や問題がある場合は、[GitHub](https://github.com/hu-shukang/tool-chain-db)でissueを開いてください。

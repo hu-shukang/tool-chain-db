@@ -5,17 +5,32 @@
 形式は [Keep a Changelog](https://keepachangelog.com/ja/1.0.0/) に基づいており、
 このプロジェクトは [セマンティックバージョニング](https://semver.org/lang/ja/spec/v2.0.0.html) に準拠しています。
 
-[English](./CHANGELOG.md) | [中文文档](./CHANGELOG.zh-CN.md)
+[English](https://github.com/hu-shukang/tool-chain-db/blob/main/CHANGELOG.md) | [中文文档](https://github.com/hu-shukang/tool-chain-db/blob/main/CHANGELOG.zh.md)
+
+---
+
+## [1.0.3] - 2025-12-11
+
+### 変更
+
+- 📚 README ドキュメントを強化し、追加のバッジを追加
+  - npm ダウンロード数バッジを追加
+  - Node.js バージョンバッジを追加
+- 📚 アクセシビリティ向上のため、ドキュメントリンクを完全な GitHub URL に更新
+- 📚 可読性向上のため、コード例のフォーマットを改善
+- 📚 明確性向上のため、例の import 文の順序を再編成
 
 ---
 
 ## [1.0.2] - 2025-12-07
 
 ### 修正
+
 - 🐛 1つのORMのみを使用する場合の「モジュールが見つかりません」エラーを修正（例：Kyselyを使用しているのにTypeORMが見つからないエラーが発生する問題）
 - 🐛 オプションのpeer dependencyロード問題を解決 - 実際に使用するORMのみがロードされるようになりました
 
 ### 変更
+
 - 🔧 **破壊的変更**：不要な依存関係のロードを避けるため、アダプターはサブパスからインポートする必要があります
   - 以前：`import { KyselyAdapter } from '@tool-chain/db'`
   - 以後：`import { KyselyAdapter } from '@tool-chain/db/kysely'`
@@ -28,11 +43,13 @@
 - 🔧 テストファイルを新しいインポートパスで更新
 
 ### 技術的な詳細
+
 - メインエントリーポイント（`src/index.ts`）からアダプターのエクスポートを削除
 - `package.json` にサブパスエクスポート設定を追加
 - メインエントリーポイントは核心的な `Chains` クラスと型のみをエクスポート
 
 ### マイグレーションガイド
+
 1.0.1からアップグレードする場合は、インポート文を更新してください：
 
 ```typescript
@@ -51,10 +68,12 @@ import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm';
 ## [1.0.1] - 2025-12-07
 
 ### 変更
+
 - 🔧 ビルドスクリプトを更新し、独立した `tsconfig.build.json` 設定ファイルを使用するように変更
 - 🔧 TypeScriptビルド設定を最適化し、開発環境とビルド環境の設定を分離
 
 ### 技術的な詳細
+
 - プロダクションビルド用の `tsconfig.build.json` ファイルを追加
 - `package.json` のビルドスクリプトを更新し、`--project tsconfig.build.json` パラメータを使用
 
@@ -63,6 +82,7 @@ import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm';
 ## [1.0.0] - 2024-12-06
 
 ### 追加機能
+
 - 🎉 @tool-chain/db 初回リリース
 - ✨ データベースチェーン操作のための核心 `Chains` クラス
 - ✨ マルチORM対応：
@@ -97,6 +117,7 @@ import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm';
   - ChainOptionsテスト（リトライ、タイムアウト、組み合わせ）
 
 ### 特徴
+
 - ESMとCommonJSの両モジュール形式をサポート
 - 完全な型推論と型安全性
 - 他のデータベースへ拡張可能なアダプターパターン

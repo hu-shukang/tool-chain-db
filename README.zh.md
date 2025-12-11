@@ -1,11 +1,13 @@
 # @tool-chain/db
 
 [![npm version](https://img.shields.io/npm/v/@tool-chain/db.svg)](https://www.npmjs.com/package/@tool-chain/db)
+[![npm downloads](https://img.shields.io/npm/dm/@tool-chain/db.svg)](https://www.npmjs.com/package/@tool-chain/db)
+[![Node.js Version](https://img.shields.io/node/v/@tool-chain/db.svg)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-基于 [@tool-chain/core](https://github.com/yourusername/tool-chain-core) 的数据库链式操作库，专为构建可组合的数据库操作而设计，支持多种 ORM 框架。
+基于 [@tool-chain/core](https://github.com/hu-shukang/tool-chain-core) 的数据库链式操作库，专为构建可组合的数据库操作而设计，支持多种 ORM 框架。
 
-[English](./README.md) | [日本語ドキュメント](./README.ja.md)
+[English](https://github.com/hu-shukang/tool-chain-db/blob/main/README.md) | [日本語ドキュメント](https://github.com/hu-shukang/tool-chain-db/blob/main/README.ja.md)
 
 ## 特性
 
@@ -47,12 +49,11 @@ npm install drizzle-orm
 ```typescript
 // 导入核心类和类型
 import { Chains } from '@tool-chain/db';
-
+import { ChainsWithDrizzle, DrizzleAdapter } from '@tool-chain/db/drizzle';
 // 导入特定适配器（仅导入需要的）
-import { KyselyAdapter, ChainsWithKysely } from '@tool-chain/db/kysely';
-import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm';
-import { PrismaAdapter, ChainsWithPrisma } from '@tool-chain/db/prisma';
-import { DrizzleAdapter, ChainsWithDrizzle } from '@tool-chain/db/drizzle';
+import { ChainsWithKysely, KyselyAdapter } from '@tool-chain/db/kysely';
+import { ChainsWithPrisma, PrismaAdapter } from '@tool-chain/db/prisma';
+import { ChainsWithTypeORM, TypeORMAdapter } from '@tool-chain/db/typeorm';
 ```
 
 这确保如果你仅使用 Kysely，TypeORM 不会被加载，你也不会因为缺少 TypeORM 依赖而出错。
@@ -72,19 +73,12 @@ import { Kysely } from 'kysely';
 // 定义你的 service 函数
 function getUser(id: number) {
   return (db: Kysely<Database>) => {
-    return db
-      .selectFrom('user')
-      .where('id', '=', id)
-      .selectAll()
-      .executeTakeFirstOrThrow();
+    return db.selectFrom('user').where('id', '=', id).selectAll().executeTakeFirstOrThrow();
   };
 }
 
 // 执行链式操作 - 无需手动传递 adapter
-const user = await new ChainsWithKysely<Database>()
-  .use(db)
-  .chain(getUser(123))
-  .invoke();
+const user = await new ChainsWithKysely<Database>().use(db).chain(getUser(123)).invoke();
 ```
 
 **方式二：使用通用 Chains 类**
@@ -97,19 +91,12 @@ import { Kysely } from 'kysely';
 // 定义你的 service 函数
 function getUser(id: number) {
   return (db: Kysely<Database>) => {
-    return db
-      .selectFrom('user')
-      .where('id', '=', id)
-      .selectAll()
-      .executeTakeFirstOrThrow();
+    return db.selectFrom('user').where('id', '=', id).selectAll().executeTakeFirstOrThrow();
   };
 }
 
 // 执行链式操作 - 需要显式传递 adapter
-const user = await new Chains()
-  .use(db, new KyselyAdapter())
-  .chain(getUser(123))
-  .invoke();
+const user = await new Chains().use(db, new KyselyAdapter()).chain(getUser(123)).invoke();
 ```
 
 ### 使用事务
@@ -121,21 +108,13 @@ import { ChainsWithKysely } from '@tool-chain/db/kysely';
 
 function createUser(data: { name: string; email: string }) {
   return (db: Kysely<Database>) => {
-    return db
-      .insertInto('user')
-      .values(data)
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    return db.insertInto('user').values(data).returningAll().executeTakeFirstOrThrow();
   };
 }
 
 function createProfile(userId: number) {
   return (db: Kysely<Database>) => {
-    return db
-      .insertInto('profile')
-      .values({ userId })
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    return db.insertInto('profile').values({ userId }).returningAll().executeTakeFirstOrThrow();
   };
 }
 
@@ -164,10 +143,10 @@ const result = await new Chains()
 ### Kysely
 
 ```typescript
-import { Kysely, PostgresDialect } from 'kysely';
-import { Pool } from 'pg';
 import { Chains } from '@tool-chain/db';
 import { KyselyAdapter } from '@tool-chain/db/kysely';
+import { Kysely, PostgresDialect } from 'kysely';
+import { Pool } from 'pg';
 
 interface Database {
   user: {
@@ -230,7 +209,7 @@ const newPost = await new Chains()
       userId: results.r1.id,
       title: 'My First Post',
       content: 'Hello World!',
-    })
+    }),
   )
   .invoke();
 ```
@@ -238,11 +217,12 @@ const newPost = await new Chains()
 ### TypeORM
 
 ```typescript
-import { DataSource } from 'typeorm';
 import { Chains } from '@tool-chain/db';
 import { TypeORMAdapter } from '@tool-chain/db/typeorm';
-import { User } from './entities/User';
+import { DataSource } from 'typeorm';
+
 import { Post } from './entities/Post';
+import { User } from './entities/User';
 
 // 初始化 TypeORM
 const dataSource = new DataSource({
@@ -296,7 +276,7 @@ const newPost = await new Chains()
       userId: results.r1.id,
       title: 'My First Post',
       content: 'Hello World!',
-    })
+    }),
   )
   .invoke();
 ```
@@ -348,7 +328,7 @@ const newPost = await new Chains()
       userId: results.r1.id,
       title: 'My First Post',
       content: 'Hello World!',
-    })
+    }),
   )
   .invoke();
 ```
@@ -356,12 +336,13 @@ const newPost = await new Chains()
 ### Drizzle ORM
 
 ```typescript
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import Database from 'better-sqlite3';
 import { Chains } from '@tool-chain/db';
 import { DrizzleAdapter } from '@tool-chain/db/drizzle';
-import { users, posts } from './schema';
+import Database from 'better-sqlite3';
 import { eq } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+
+import { posts, users } from './schema';
 
 // 初始化 Drizzle
 const sqlite = new Database('mydb.db');
@@ -404,7 +385,7 @@ const newPost = await new Chains()
       userId: results.r1!.id,
       title: 'My First Post',
       content: 'Hello World!',
-    })
+    }),
   )
   .invoke();
 ```
@@ -438,6 +419,7 @@ const newPost = await new Chains()
 **函数模式：**
 
 1. **Service 函数模式（推荐）**
+
    ```typescript
    function getUser(id: number) {
      return (db: Database) => {
@@ -480,10 +462,7 @@ Kysely 的便利类，已预配置适配器。
 ```typescript
 import { ChainsWithKysely } from '@tool-chain/db/kysely';
 
-const result = await new ChainsWithKysely<Database>()
-  .use(db)
-  .chain(getUser(123))
-  .invoke();
+const result = await new ChainsWithKysely<Database>().use(db).chain(getUser(123)).invoke();
 ```
 
 #### `ChainsWithTypeORM`
@@ -493,10 +472,7 @@ TypeORM 的便利类，已预配置适配器。
 ```typescript
 import { ChainsWithTypeORM } from '@tool-chain/db/typeorm';
 
-const result = await new ChainsWithTypeORM()
-  .use(dataSource)
-  .chain(getUser(123))
-  .invoke();
+const result = await new ChainsWithTypeORM().use(dataSource).chain(getUser(123)).invoke();
 ```
 
 #### `ChainsWithPrisma`
@@ -506,10 +482,7 @@ Prisma 的便利类，已预配置适配器。
 ```typescript
 import { ChainsWithPrisma } from '@tool-chain/db/prisma';
 
-const result = await new ChainsWithPrisma()
-  .use(prisma)
-  .chain(getUser(123))
-  .invoke();
+const result = await new ChainsWithPrisma().use(prisma).chain(getUser(123)).invoke();
 ```
 
 #### `ChainsWithDrizzle<TDb>`
@@ -519,10 +492,7 @@ Drizzle ORM 的便利类，已预配置适配器。
 ```typescript
 import { ChainsWithDrizzle } from '@tool-chain/db/drizzle';
 
-const result = await new ChainsWithDrizzle()
-  .use(db)
-  .chain(getUser(123))
-  .invoke();
+const result = await new ChainsWithDrizzle().use(db).chain(getUser(123)).invoke();
 ```
 
 ### 适配器
@@ -535,6 +505,7 @@ Kysely ORM 的适配器。
 
 ```typescript
 import { KyselyAdapter } from '@tool-chain/db/kysely';
+
 const adapter = new KyselyAdapter<Database>();
 ```
 
@@ -544,6 +515,7 @@ TypeORM 的适配器。
 
 ```typescript
 import { TypeORMAdapter } from '@tool-chain/db/typeorm';
+
 const adapter = new TypeORMAdapter();
 ```
 
@@ -553,6 +525,7 @@ Prisma ORM 的适配器。
 
 ```typescript
 import { PrismaAdapter } from '@tool-chain/db/prisma';
+
 const adapter = new PrismaAdapter();
 ```
 
@@ -562,6 +535,7 @@ Drizzle ORM 的适配器。
 
 ```typescript
 import { DrizzleAdapter } from '@tool-chain/db/drizzle';
+
 const adapter = new DrizzleAdapter();
 ```
 
@@ -570,10 +544,7 @@ const adapter = new DrizzleAdapter();
 使用 `withoutThrow` 选项优雅地处理错误：
 
 ```typescript
-const result = await new Chains()
-  .use(db, adapter)
-  .chain(getUser(999), { withoutThrow: true })
-  .invoke();
+const result = await new Chains().use(db, adapter).chain(getUser(999), { withoutThrow: true }).invoke();
 
 if (result.error) {
   console.error('用户未找到：', result.error);
@@ -587,19 +558,13 @@ if (result.error) {
 ### 失败重试
 
 ```typescript
-const user = await new Chains()
-  .use(db, adapter)
-  .chain(getUser(123), { retry: 3 })
-  .invoke();
+const user = await new Chains().use(db, adapter).chain(getUser(123), { retry: 3 }).invoke();
 ```
 
 ### 超时控制
 
 ```typescript
-const user = await new Chains()
-  .use(db, adapter)
-  .chain(getUser(123), { timeout: 5000 })
-  .invoke();
+const user = await new Chains().use(db, adapter).chain(getUser(123), { timeout: 5000 }).invoke();
 ```
 
 ### 访问前一步的结果
@@ -642,4 +607,4 @@ MIT © HU SHUKANG
 
 ## 支持
 
-如果你有任何问题或遇到问题，请在 [GitHub](https://github.com/yourusername/tool-chain-db) 上开启 issue。
+如果你有任何问题或遇到问题，请在 [GitHub](https://github.com/hu-shukang/tool-chain-db) 上开启 issue。

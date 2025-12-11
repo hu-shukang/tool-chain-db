@@ -5,17 +5,32 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/spec/v2.0.0.html)。
 
-[English](./CHANGELOG.md) | [日本語ドキュメント](./CHANGELOG.ja.md)
+[English](https://github.com/hu-shukang/tool-chain-db/blob/main/CHANGELOG.md) | [日本語ドキュメント](https://github.com/hu-shukang/tool-chain-db/blob/main/CHANGELOG.ja.md)
+
+---
+
+## [1.0.3] - 2025-12-11
+
+### 变更
+
+- 📚 增强 README 文档，添加更多徽章
+  - 添加 npm 下载量徽章
+  - 添加 Node.js 版本徽章
+- 📚 更新文档链接为完整的 GitHub URL，提升可访问性
+- 📚 优化代码示例格式，提高可读性
+- 📚 重新组织示例中的 import 语句顺序，提升清晰度
 
 ---
 
 ## [1.0.2] - 2025-12-07
 
 ### 修复
+
 - 🐛 修复了只使用一个 ORM 时出现"找不到模块"的错误（例如，使用 Kysely 却报缺少 TypeORM 的错误）
 - 🐛 解决了可选 peer 依赖加载问题 - 现在只会加载你实际使用的 ORM
 
 ### 变更
+
 - 🔧 **破坏性变更**：适配器现在必须从子路径导入，以避免加载不必要的依赖
   - 旧方式：`import { KyselyAdapter } from '@tool-chain/db'`
   - 新方式：`import { KyselyAdapter } from '@tool-chain/db/kysely'`
@@ -28,11 +43,13 @@
 - 🔧 更新了测试文件以使用新的导入路径
 
 ### 技术细节
+
 - 从主入口文件（`src/index.ts`）中移除了适配器导出
 - 在 `package.json` 中添加了子路径导出配置
 - 主入口现在只导出核心 `Chains` 类和类型
 
 ### 迁移指南
+
 如果你从 1.0.1 升级，请更新你的导入语句：
 
 ```typescript
@@ -51,10 +68,12 @@ import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm';
 ## [1.0.1] - 2025-12-07
 
 ### 变更
+
 - 🔧 更新构建脚本，使用独立的 `tsconfig.build.json` 配置文件进行编译
 - 🔧 优化 TypeScript 构建配置，分离开发和构建环境的配置
 
 ### 技术细节
+
 - 新增 `tsconfig.build.json` 文件用于生产构建
 - 更新 `package.json` 中的构建脚本，使用 `--project tsconfig.build.json` 参数
 
@@ -63,6 +82,7 @@ import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm';
 ## [1.0.0] - 2024-12-06
 
 ### 新增功能
+
 - 🎉 @tool-chain/db 首次发布
 - ✨ 核心 `Chains` 类，支持数据库链式操作
 - ✨ 多 ORM 支持：
@@ -97,6 +117,7 @@ import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm';
   - ChainOptions 测试（重试、超时、组合）
 
 ### 特性
+
 - 支持 ESM 和 CommonJS 双模块格式
 - 完整的类型推导和类型安全
 - 适配器模式，可扩展到其他数据库

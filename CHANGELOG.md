@@ -5,17 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-[中文文档](./CHANGELOG.zh-CN.md) | [日本語ドキュメント](./CHANGELOG.ja.md)
+[中文文档](https://github.com/hu-shukang/tool-chain-db/blob/main/CHANGELOG.zh.md) | [日本語ドキュメント](https://github.com/hu-shukang/tool-chain-db/blob/main/CHANGELOG.ja.md)
+
+---
+
+## [1.0.3] - 2025-12-11
+
+### Changed
+
+- 📚 Enhanced README documentation with additional badges
+  - Added npm downloads badge
+  - Added Node.js version badge
+- 📚 Updated documentation links to use full GitHub URLs for better accessibility
+- 📚 Improved code examples formatting for better readability
+- 📚 Reorganized import statements order in examples for better clarity
 
 ---
 
 ## [1.0.2] - 2025-12-07
 
 ### Fixed
+
 - 🐛 Fixed "Cannot find module" error when using only one ORM (e.g., using Kysely but getting errors about missing TypeORM)
 - 🐛 Resolved optional peer dependency loading issue - now only the ORM you use will be loaded
 
 ### Changed
+
 - 🔧 **Breaking Change**: Adapters must now be imported from subpaths to avoid loading unnecessary dependencies
   - Before: `import { KyselyAdapter } from '@tool-chain/db'`
   - After: `import { KyselyAdapter } from '@tool-chain/db/kysely'`
@@ -28,11 +43,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🔧 Updated test files to use new import paths
 
 ### Technical
+
 - Removed adapter exports from main entry point (`src/index.ts`)
 - Added subpath exports configuration in `package.json`
 - Main entry point now only exports core `Chains` class and types
 
 ### Migration Guide
+
 If you're upgrading from 1.0.1, update your imports:
 
 ```typescript
@@ -51,10 +68,12 @@ import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm';
 ## [1.0.1] - 2025-12-07
 
 ### Changed
+
 - 🔧 Updated build scripts to use separate `tsconfig.build.json` configuration file
 - 🔧 Optimized TypeScript build configuration, separating development and build environment settings
 
 ### Technical
+
 - Added `tsconfig.build.json` file for production builds
 - Updated build scripts in `package.json` to use `--project tsconfig.build.json` parameter
 
@@ -63,6 +82,7 @@ import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm';
 ## [1.0.0] - 2024-12-06
 
 ### Added
+
 - 🎉 Initial release of @tool-chain/db
 - ✨ Core `Chains` class for database chain operations
 - ✨ Multi-ORM support:
@@ -97,6 +117,7 @@ import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm';
   - ChainOptions tests (retry, timeout, combinations)
 
 ### Features
+
 - Supports both ESM and CommonJS module formats
 - Complete type inference and type safety
 - Adapter pattern for extensibility to other databases

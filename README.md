@@ -1,11 +1,13 @@
 # @tool-chain/db
 
 [![npm version](https://img.shields.io/npm/v/@tool-chain/db.svg)](https://www.npmjs.com/package/@tool-chain/db)
+[![npm downloads](https://img.shields.io/npm/dm/@tool-chain/db.svg)](https://www.npmjs.com/package/@tool-chain/db)
+[![Node.js Version](https://img.shields.io/node/v/@tool-chain/db.svg)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Database chain operation library based on [@tool-chain/core](https://github.com/yourusername/tool-chain-core), designed specifically for building composable database operations with support for multiple ORMs.
+Database chain operation library based on [@tool-chain/core](https://github.com/hu-shukang/tool-chain-core), designed specifically for building composable database operations with support for multiple ORMs.
 
-[中文文档](./README.zh-CN.md) | [日本語ドキュメント](./README.ja.md)
+[中文文档](https://github.com/hu-shukang/tool-chain-db/blob/main/README.zh.md) | [日本語ドキュメント](https://github.com/hu-shukang/tool-chain-db/blob/main/README.ja.md)
 
 ## Features
 
@@ -47,12 +49,11 @@ To avoid loading unnecessary dependencies, adapters should be imported from thei
 ```typescript
 // Import core classes and types
 import { Chains } from '@tool-chain/db';
-
+import { ChainsWithDrizzle, DrizzleAdapter } from '@tool-chain/db/drizzle';
 // Import specific adapters (only the ones you need)
-import { KyselyAdapter, ChainsWithKysely } from '@tool-chain/db/kysely';
-import { TypeORMAdapter, ChainsWithTypeORM } from '@tool-chain/db/typeorm';
-import { PrismaAdapter, ChainsWithPrisma } from '@tool-chain/db/prisma';
-import { DrizzleAdapter, ChainsWithDrizzle } from '@tool-chain/db/drizzle';
+import { ChainsWithKysely, KyselyAdapter } from '@tool-chain/db/kysely';
+import { ChainsWithPrisma, PrismaAdapter } from '@tool-chain/db/prisma';
+import { ChainsWithTypeORM, TypeORMAdapter } from '@tool-chain/db/typeorm';
 ```
 
 This ensures that if you only use Kysely, TypeORM won't be loaded and you won't get errors about missing TypeORM dependencies.
@@ -72,19 +73,12 @@ import { Kysely } from 'kysely';
 // Define your service functions
 function getUser(id: number) {
   return (db: Kysely<Database>) => {
-    return db
-      .selectFrom('user')
-      .where('id', '=', id)
-      .selectAll()
-      .executeTakeFirstOrThrow();
+    return db.selectFrom('user').where('id', '=', id).selectAll().executeTakeFirstOrThrow();
   };
 }
 
 // Execute the chain - no need to pass adapter manually
-const user = await new ChainsWithKysely<Database>()
-  .use(db)
-  .chain(getUser(123))
-  .invoke();
+const user = await new ChainsWithKysely<Database>().use(db).chain(getUser(123)).invoke();
 ```
 
 **Option 2: Using Generic Chains Class**
@@ -97,19 +91,12 @@ import { Kysely } from 'kysely';
 // Define your service functions
 function getUser(id: number) {
   return (db: Kysely<Database>) => {
-    return db
-      .selectFrom('user')
-      .where('id', '=', id)
-      .selectAll()
-      .executeTakeFirstOrThrow();
+    return db.selectFrom('user').where('id', '=', id).selectAll().executeTakeFirstOrThrow();
   };
 }
 
 // Execute the chain - need to pass adapter explicitly
-const user = await new Chains()
-  .use(db, new KyselyAdapter())
-  .chain(getUser(123))
-  .invoke();
+const user = await new Chains().use(db, new KyselyAdapter()).chain(getUser(123)).invoke();
 ```
 
 ### With Transactions
@@ -121,21 +108,13 @@ import { ChainsWithKysely } from '@tool-chain/db/kysely';
 
 function createUser(data: { name: string; email: string }) {
   return (db: Kysely<Database>) => {
-    return db
-      .insertInto('user')
-      .values(data)
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    return db.insertInto('user').values(data).returningAll().executeTakeFirstOrThrow();
   };
 }
 
 function createProfile(userId: number) {
   return (db: Kysely<Database>) => {
-    return db
-      .insertInto('profile')
-      .values({ userId })
-      .returningAll()
-      .executeTakeFirstOrThrow();
+    return db.insertInto('profile').values({ userId }).returningAll().executeTakeFirstOrThrow();
   };
 }
 
@@ -164,10 +143,10 @@ const result = await new Chains()
 ### Kysely
 
 ```typescript
-import { Kysely, PostgresDialect } from 'kysely';
-import { Pool } from 'pg';
 import { Chains } from '@tool-chain/db';
 import { KyselyAdapter } from '@tool-chain/db/kysely';
+import { Kysely, PostgresDialect } from 'kysely';
+import { Pool } from 'pg';
 
 interface Database {
   user: {
@@ -230,7 +209,7 @@ const newPost = await new Chains()
       userId: results.r1.id,
       title: 'My First Post',
       content: 'Hello World!',
-    })
+    }),
   )
   .invoke();
 ```
@@ -238,11 +217,12 @@ const newPost = await new Chains()
 ### TypeORM
 
 ```typescript
-import { DataSource } from 'typeorm';
 import { Chains } from '@tool-chain/db';
 import { TypeORMAdapter } from '@tool-chain/db/typeorm';
-import { User } from './entities/User';
+import { DataSource } from 'typeorm';
+
 import { Post } from './entities/Post';
+import { User } from './entities/User';
 
 // Initialize TypeORM
 const dataSource = new DataSource({
@@ -296,7 +276,7 @@ const newPost = await new Chains()
       userId: results.r1.id,
       title: 'My First Post',
       content: 'Hello World!',
-    })
+    }),
   )
   .invoke();
 ```
@@ -348,7 +328,7 @@ const newPost = await new Chains()
       userId: results.r1.id,
       title: 'My First Post',
       content: 'Hello World!',
-    })
+    }),
   )
   .invoke();
 ```
@@ -356,12 +336,13 @@ const newPost = await new Chains()
 ### Drizzle ORM
 
 ```typescript
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import Database from 'better-sqlite3';
 import { Chains } from '@tool-chain/db';
 import { DrizzleAdapter } from '@tool-chain/db/drizzle';
-import { users, posts } from './schema';
+import Database from 'better-sqlite3';
 import { eq } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+
+import { posts, users } from './schema';
 
 // Initialize Drizzle
 const sqlite = new Database('mydb.db');
@@ -404,7 +385,7 @@ const newPost = await new Chains()
       userId: results.r1!.id,
       title: 'My First Post',
       content: 'Hello World!',
-    })
+    }),
   )
   .invoke();
 ```
@@ -438,6 +419,7 @@ Add a database operation to the chain.
 **Function Patterns:**
 
 1. **Service Function Pattern (Recommended)**
+
    ```typescript
    function getUser(id: number) {
      return (db: Database) => {
@@ -480,10 +462,7 @@ Convenience class for Kysely with pre-configured adapter.
 ```typescript
 import { ChainsWithKysely } from '@tool-chain/db/kysely';
 
-const result = await new ChainsWithKysely<Database>()
-  .use(db)
-  .chain(getUser(123))
-  .invoke();
+const result = await new ChainsWithKysely<Database>().use(db).chain(getUser(123)).invoke();
 ```
 
 #### `ChainsWithTypeORM`
@@ -493,10 +472,7 @@ Convenience class for TypeORM with pre-configured adapter.
 ```typescript
 import { ChainsWithTypeORM } from '@tool-chain/db/typeorm';
 
-const result = await new ChainsWithTypeORM()
-  .use(dataSource)
-  .chain(getUser(123))
-  .invoke();
+const result = await new ChainsWithTypeORM().use(dataSource).chain(getUser(123)).invoke();
 ```
 
 #### `ChainsWithPrisma`
@@ -506,10 +482,7 @@ Convenience class for Prisma with pre-configured adapter.
 ```typescript
 import { ChainsWithPrisma } from '@tool-chain/db/prisma';
 
-const result = await new ChainsWithPrisma()
-  .use(prisma)
-  .chain(getUser(123))
-  .invoke();
+const result = await new ChainsWithPrisma().use(prisma).chain(getUser(123)).invoke();
 ```
 
 #### `ChainsWithDrizzle<TDb>`
@@ -519,10 +492,7 @@ Convenience class for Drizzle ORM with pre-configured adapter.
 ```typescript
 import { ChainsWithDrizzle } from '@tool-chain/db/drizzle';
 
-const result = await new ChainsWithDrizzle()
-  .use(db)
-  .chain(getUser(123))
-  .invoke();
+const result = await new ChainsWithDrizzle().use(db).chain(getUser(123)).invoke();
 ```
 
 ### Adapters
@@ -535,6 +505,7 @@ Adapter for Kysely ORM.
 
 ```typescript
 import { KyselyAdapter } from '@tool-chain/db/kysely';
+
 const adapter = new KyselyAdapter<Database>();
 ```
 
@@ -544,6 +515,7 @@ Adapter for TypeORM.
 
 ```typescript
 import { TypeORMAdapter } from '@tool-chain/db/typeorm';
+
 const adapter = new TypeORMAdapter();
 ```
 
@@ -553,6 +525,7 @@ Adapter for Prisma ORM.
 
 ```typescript
 import { PrismaAdapter } from '@tool-chain/db/prisma';
+
 const adapter = new PrismaAdapter();
 ```
 
@@ -562,6 +535,7 @@ Adapter for Drizzle ORM.
 
 ```typescript
 import { DrizzleAdapter } from '@tool-chain/db/drizzle';
+
 const adapter = new DrizzleAdapter();
 ```
 
@@ -570,10 +544,7 @@ const adapter = new DrizzleAdapter();
 Use the `withoutThrow` option to handle errors gracefully:
 
 ```typescript
-const result = await new Chains()
-  .use(db, adapter)
-  .chain(getUser(999), { withoutThrow: true })
-  .invoke();
+const result = await new Chains().use(db, adapter).chain(getUser(999), { withoutThrow: true }).invoke();
 
 if (result.error) {
   console.error('User not found:', result.error);
@@ -587,19 +558,13 @@ if (result.error) {
 ### Retry on Failure
 
 ```typescript
-const user = await new Chains()
-  .use(db, adapter)
-  .chain(getUser(123), { retry: 3 })
-  .invoke();
+const user = await new Chains().use(db, adapter).chain(getUser(123), { retry: 3 }).invoke();
 ```
 
 ### Timeout
 
 ```typescript
-const user = await new Chains()
-  .use(db, adapter)
-  .chain(getUser(123), { timeout: 5000 })
-  .invoke();
+const user = await new Chains().use(db, adapter).chain(getUser(123), { timeout: 5000 }).invoke();
 ```
 
 ### Accessing Previous Results
@@ -642,4 +607,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Support
 
-If you have any questions or issues, please open an issue on [GitHub](https://github.com/yourusername/tool-chain-db).
+If you have any questions or issues, please open an issue on [GitHub](https://github.com/hu-shukang/tool-chain-db).
